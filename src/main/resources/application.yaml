@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: tour-package-be
+
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+
+  profiles:
+    active: 'dev'
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
