@@ -32,7 +32,7 @@ public class Activity {
     private String startLocation;
     private String endLocation;
 
-    // ✅ 1 activity bisa muncul di banyak ordered quantity
+    // 1 activity bisa muncul di banyak ordered quantity
     @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderedQuantity> orderedQuantities;
 }

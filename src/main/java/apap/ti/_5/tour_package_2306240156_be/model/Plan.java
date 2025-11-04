@@ -37,8 +37,7 @@ public class Plan {
     
     private String endLocation;
 
-    // ✅ Banyak plan milik 1 package
-    // PERBAIKAN: Tambahkan field packageId untuk mapping yang benar
+    // Banyak plan milik 1 package
     @Column(name = "package_id", insertable = false, updatable = false)
     private String packageId;
     
@@ -46,7 +45,7 @@ public class Plan {
     @JoinColumn(name = "package_id", referencedColumnName = "id")
     private Package tourPackage;
 
-    // ✅ 1 plan punya banyak ordered quantity
+    // 1 plan punya banyak ordered quantity
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderedQuantity> orderedQuantities;
 }
