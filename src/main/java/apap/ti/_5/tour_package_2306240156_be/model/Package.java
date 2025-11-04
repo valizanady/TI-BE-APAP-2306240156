@@ -29,7 +29,7 @@ public class Package {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime endDate;
 
-    // ✅ 1 package punya banyak plan
+    // 1 package punya banyak plan
     @OneToMany(mappedBy = "tourPackage", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Plan> plans;
 }

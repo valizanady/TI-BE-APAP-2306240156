@@ -29,20 +29,20 @@ public class OrderedQuantity {
     @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime endDate;
 
-    // ✅ Tambahkan field eksplisit untuk planId (sesuai class diagram)
+    // Tambahkan field eksplisit untuk planId (sesuai class diagram)
     @Column(name = "plan_id", insertable = false, updatable = false)
     private UUID planId;
     
-    // ✅ Banyak ordered quantity milik 1 plan
+    // Banyak ordered quantity milik 1 plan
     @ManyToOne
     @JoinColumn(name = "plan_id", referencedColumnName = "id")
     private Plan plan;
 
-    // ✅ Tambahkan field eksplisit untuk activityId (sesuai class diagram)
+    // Tambahkan field eksplisit untuk activityId (sesuai class diagram)
     @Column(name = "activity_id", insertable = false, updatable = false)
     private String activityId;
     
-    // ✅ Banyak ordered quantity terkait 1 activity
+    // Banyak ordered quantity terkait 1 activity
     @ManyToOne
     @JoinColumn(name = "activity_id", referencedColumnName = "id")
     private Activity activity;
