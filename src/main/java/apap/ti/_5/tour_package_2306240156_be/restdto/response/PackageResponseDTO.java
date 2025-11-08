@@ -1,8 +1,8 @@
-
 package apap.ti._5.tour_package_2306240156_be.restdto.response;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class PackageResponseDTO {
@@ -14,4 +14,5 @@ public class PackageResponseDTO {
   private String status;
   private LocalDateTime startDate;
   private LocalDateTime endDate;
+  private List<PlanResponseDTO> plans;
 }
