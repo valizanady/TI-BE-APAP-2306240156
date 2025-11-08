@@ -1,5 +1,6 @@
 package apap.ti._5.tour_package_2306240156_be.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -30,6 +31,7 @@ public class Package {
     private LocalDateTime endDate;
 
     // 1 package punya banyak plan
-    @OneToMany(mappedBy = "tourPackage", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "tourPackage", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"tourPackage", "orderedQuantities"})
     private List<Plan> plans;
 }

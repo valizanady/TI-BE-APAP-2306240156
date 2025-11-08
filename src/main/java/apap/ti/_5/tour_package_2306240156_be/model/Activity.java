@@ -1,5 +1,6 @@
 package apap.ti._5.tour_package_2306240156_be.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -33,6 +34,7 @@ public class Activity {
     private String endLocation;
 
     // 1 activity bisa muncul di banyak ordered quantity
-    @OneToMany(mappedBy = "activity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "activity", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"activity", "plan"})
     private List<OrderedQuantity> orderedQuantities;
 }
