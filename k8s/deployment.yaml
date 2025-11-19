@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tourpackage-be
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tourpackage-be
+  template:
+    metadata:
+      labels:
+        app: tourpackage-be
+    spec:
+      containers:
+        - name: springboot-container
+          image: valizanadya/tourpackage-be:REPLACE_ME_TAG
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: tourpackage-be-config
+                  key: DATABASE_URL
+
+            - name: DATABASE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: tourpackage-be-config
+                  key: DATABASE_USERNAME
+
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: tourpackage-be-secret
+                  key: DATABASE_PASSWORD
+
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tourpackage-be-secret
+                  key: JWT_SECRET_KEY
+
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                secretKeyRef:
+                  name: tourpackage-be-secret
+                  key: CORS_ALLOWED_ORIGINS
