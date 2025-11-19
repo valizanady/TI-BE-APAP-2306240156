@@ -87,7 +87,7 @@ jobs:
 
       - name: Generate ConfigMap
         run: |
-          printf "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: tourpackage-be-config\n  namespace: default\ndata:\n  DATABASE_URL_PROD: \"%s\"\n  DATABASE_USERNAME: \"%s\"\n" \
+          printf "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: tourpackage-be-config\n  namespace: default\ndata:\n  DATABASE_URL: \"%s\"\n  DATABASE_USERNAME: \"%s\"\n" \
           "${{ secrets.DATABASE_URL }}" \
           "${{ secrets.DATABASE_USERNAME }}" > configmap.yaml
 
