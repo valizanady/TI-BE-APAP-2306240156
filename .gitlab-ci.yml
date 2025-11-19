@@ -6,10 +6,10 @@ stages:
 variables:
   DOCKER_IMAGE_NAME: ${DOCKER_IMAGE_NAME}
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
-  
+
 build:
   stage: build
-  image: gradle:8.6-jdk21
+  image: gradle:8.6-jdk17
   script:
     - chmod +x ./gradlew
     - ./gradlew clean build -x test
@@ -54,33 +54,33 @@ deploy:
     - ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts
 
   script:
-    - echo "Generating ConfigMap and Secret..."
+    - echo "Generating Kubernetes ConfigMap & Secret..."
 
     # CONFIGMAP
     - |
       printf "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: tourpackage-be-config\n  namespace: default\ndata:\n  DATABASE_URL: \"%s\"\n  DATABASE_USERNAME: \"%s\"\n" \
       "$DATABASE_URL" "$DATABASE_USERNAME" > configmap.yaml
 
-    # SECRET
+    # SECRET (NO JWT!)
     - |
-      printf "apiVersion: v1\nkind: Secret\nmetadata:\n  name: tourpackage-be-secret\n  namespace: default\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: \"%s\"\n  JWT_SECRET_KEY: \"%s\"\n  CORS_ALLOWED_ORIGINS: \"%s\"\n" \
-      "$DATABASE_PASSWORD" "$JWT_SECRET_KEY" "$CORS_ALLOWED_ORIGINS" > secret.yaml
+      printf "apiVersion: v1\nkind: Secret\nmetadata:\n  name: tourpackage-be-secret\n  namespace: default\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: \"%s\"\n  CORS_ALLOWED_ORIGINS: \"%s\"\n" \
+      "$DATABASE_PASSWORD" "$CORS_ALLOWED_ORIGINS" > secret.yaml
 
-    # Replace TAG in deployment.yaml
+    # Replace Docker image tag
     - sed "s|REPLACE_ME_TAG|$IMAGE_TAG|g" k8s/deployment.yaml > deployment.yaml
 
-    - echo "Uploading k8s files to EC2..."
+    - echo "Uploading files to EC2..."
 
     - ssh $EC2_USER@$EC2_HOST "mkdir -p ~/app/tourpackage-be/k8s"
 
-    - scp deployment.yaml configmap.yaml secret.yaml k8s/service.yaml k8s/ingress.yaml \
+    - scp deployment.yaml configmap.yaml secret.yaml \
+        k8s/service.yaml k8s/ingress.yaml \
         $EC2_USER@$EC2_HOST:~/app/tourpackage-be/k8s/
 
-    # Apply
-    - |
-      ssh $EC2_USER@$EC2_HOST "
+    - ssh $EC2_USER@$EC2_HOST "
         sudo k3s kubectl apply -f ~/app/tourpackage-be/k8s/ &&
         sudo k3s kubectl rollout status deployment/tourpackage-be -n default
       "
+
   only:
     - main
