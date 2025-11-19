@@ -87,13 +87,13 @@ jobs:
 
       - name: Generate ConfigMap
         run: |
-          printf "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: insurance-be-config\n  namespace: default\ndata:\n  DATABASE_URL_PROD: \"%s\"\n  DATABASE_USERNAME: \"%s\"\n" \
+          printf "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: tourpackage-be-config\n  namespace: default\ndata:\n  DATABASE_URL_PROD: \"%s\"\n  DATABASE_USERNAME: \"%s\"\n" \
           "${{ secrets.DATABASE_URL_PROD }}" \
           "${{ secrets.DATABASE_USERNAME }}" > configmap.yaml
 
       - name: Generate Secret
         run: |
-          printf "apiVersion: v1\nkind: Secret\nmetadata:\n  name: insurance-be-secret\n  namespace: default\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: \"%s\"\n  CORS_ALLOWED_ORIGINS: \"%s\"\n" \
+          printf "apiVersion: v1\nkind: Secret\nmetadata:\n  name: tourpackage-be-secret\n  namespace: default\ntype: Opaque\nstringData:\n  DATABASE_PASSWORD: \"%s\"\n  CORS_ALLOWED_ORIGINS: \"%s\"\n" \
           "${{ secrets.DATABASE_PASSWORD }}" \
           "${{ secrets.CORS_ALLOWED_ORIGINS }}" > secret.yaml
 
@@ -102,13 +102,13 @@ jobs:
 
       - name: Copy k8s files to EC2
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/app/insurance-be/k8s"
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ~/app/tourpackage-be/k8s"
           scp deployment.yaml configmap.yaml secret.yaml k8s/service.yaml k8s/ingress.yaml \
-              ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app/insurance-be/k8s/
+              ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/app/tourpackage-be/k8s/
 
       - name: Apply to k3s
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "
-            sudo k3s kubectl apply -f ~/app/insurance-be/k8s/ &&
-            sudo k3s kubectl rollout status deployment/insurance-be -n default
+            sudo k3s kubectl apply -f ~/app/tourpackage-be/k8s/ &&
+            sudo k3s kubectl rollout status deployment/tourpackage-be -n default
           "
