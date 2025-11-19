@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${CORS_ALLOWED_ORIGINS}")
 @RequestMapping("/statistics")
 @RequiredArgsConstructor
 public class StatisticsRestController {

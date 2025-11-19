@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/location")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${CORS_ALLOWED_ORIGINS}")
 public class LocationRestController {
 
     private final RestTemplate restTemplate = new RestTemplate();

@@ -32,7 +32,8 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/package")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "${CORS_ALLOWED_ORIGINS}")
+
 @RequiredArgsConstructor
 public class PackageRestController {
   private static final Logger logger = LoggerFactory.getLogger(PackageRestController.class);
