@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/plans")
-@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class PlanRestController {
 
