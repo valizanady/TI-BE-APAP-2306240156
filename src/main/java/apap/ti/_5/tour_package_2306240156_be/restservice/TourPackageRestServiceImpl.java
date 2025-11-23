@@ -90,14 +90,19 @@ public class TourPackageRestServiceImpl implements PackageRestService {
   public PackageResponseDTO create(CreatePackageRequestDTO req) {
     LocalDateTime now = LocalDateTime.now();
     
+    // Validasi: quota harus > 0
+    if (req.getQuota() <= 0) {
+      throw new IllegalArgumentException("Quota must be greater than 0");
+    }
+    
     // Validasi: startDate harus >= now
     if (req.getStartDate().isBefore(now)) {
       throw new IllegalArgumentException("Start date cannot be earlier than current date and time");
     }
     
-    // Validasi: endDate tidak boleh sebelum startDate
-    if (req.getEndDate().isBefore(req.getStartDate())) {
-      throw new IllegalArgumentException("End date cannot be earlier than start date");
+    // Validasi: endDate harus > startDate
+    if (req.getEndDate().isBefore(req.getStartDate()) || req.getEndDate().isEqual(req.getStartDate())) {
+      throw new IllegalArgumentException("End date must be after start date");
     }
 
     // Generate ID dengan format PKG-{YYYYMMDD}-{XXX}
@@ -145,9 +150,21 @@ public class TourPackageRestServiceImpl implements PackageRestService {
       var pkg = repo.findById(id)
           .orElseThrow(() -> new RuntimeException("Package not found"));
 
+      LocalDateTime now = LocalDateTime.now();
+
       // ✅ Validasi: quota harus > 0
       if (dto.getQuota() <= 0) {
           throw new IllegalArgumentException("Quota must be greater than 0");
+      }
+
+      // ✅ Validasi: startDate harus >= now
+      if (dto.getStartDate().isBefore(now)) {
+          throw new IllegalArgumentException("Start date cannot be earlier than current date and time");
+      }
+
+      // ✅ Validasi: endDate harus > startDate
+      if (dto.getEndDate().isBefore(dto.getStartDate()) || dto.getEndDate().isEqual(dto.getStartDate())) {
+          throw new IllegalArgumentException("End date must be after start date");
       }
 
       // ✅ Only allow update if status is Pending AND no active plans
