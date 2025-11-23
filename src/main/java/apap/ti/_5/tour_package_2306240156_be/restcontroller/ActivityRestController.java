@@ -29,10 +29,10 @@ public class ActivityRestController {
      * GET /activities
      * Get all activities with optional filters and search
      * 
-     * Default: Shows only active activities (isDeleted = FALSE)
+     * Default: Shows ALL activities (no isDeleted filter)
      * Default sorting: startDate ascending
      * 
-     * @param isDeleted Optional - filter by isDeleted status (null = show active only, true = show deleted, false = show active)
+     * @param isDeleted Optional - filter by isDeleted status (null = show all, true = show deleted only, false = show active only)
      * @param activityType Optional - filter by activity type
      * @param startLocation Optional - filter by start location
      * @param endLocation Optional - filter by end location
@@ -61,16 +61,11 @@ public class ActivityRestController {
             // 2. Apply filters
             List<Activity> filteredActivities = activities.stream()
                     .filter(activity -> {
-                        // ✅ Filter: isDeleted
-                        // null (default) → show only active (isDeleted = false)
-                        // true → show only deleted (isDeleted = true)
-                        // false → show only active (isDeleted = false)
-                        if (isDeleted == null) {
-                            // Default: show only active activities
-                            if (Boolean.TRUE.equals(activity.getIsDeleted())) {
-                                return false;
-                            }
-                        } else {
+                        // ✅ Filter: isDeleted (OPTIONAL)
+                        // null (default) → show ALL activities (no filter)
+                        // true → show ONLY deleted (isDeleted = true)
+                        // false → show ONLY active (isDeleted = false)
+                        if (isDeleted != null) {
                             // Filter by specified isDeleted value
                             if (!isDeleted.equals(activity.getIsDeleted())) {
                                 return false;
