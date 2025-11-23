@@ -7,6 +7,7 @@ import apap.ti._5.tour_package_2306240156_be.repository.PlanRepository;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.CreatePlanRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePlanRequestDTO;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -212,7 +213,25 @@ public class PlanRestServiceImpl implements PlanRestService {
         
         System.out.println("✅ Validation passed, proceeding with soft delete");
         
-        // 3. Soft delete: Mark as deleted (keeps record in DB)
+        // 3. Soft delete all OrderedQuantities terkait dengan Plan ini
+        List<OrderedQuantity> orderedQuantities = plan.getOrderedQuantities();
+        if (orderedQuantities != null && !orderedQuantities.isEmpty()) {
+            int deletedCount = 0;
+            for (OrderedQuantity oq : orderedQuantities) {
+                // Skip yang sudah di-soft delete
+                if (!Boolean.TRUE.equals(oq.getIsDeleted())) {
+                    oq.setIsDeleted(true);
+                    deletedCount++;
+                    System.out.println("   🗑️ Soft-deleting OrderedQuantity: " + oq.getId() + 
+                                     " (Activity: " + oq.getActivity().getActivityName() + ")");
+                }
+            }
+            System.out.println("✅ Soft-deleted " + deletedCount + " OrderedQuantities");
+        } else {
+            System.out.println("ℹ️ No OrderedQuantities to delete");
+        }
+        
+        // 4. Soft delete Plan: Mark as deleted (keeps record in DB)
         plan.setIsDeleted(true);
         planRepository.save(plan);
         
