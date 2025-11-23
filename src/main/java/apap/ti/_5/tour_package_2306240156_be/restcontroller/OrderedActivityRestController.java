@@ -95,6 +95,27 @@ public class OrderedActivityRestController {
             Plan plan = planRepository.findById(UUID.fromString(planId))
                     .orElseThrow(() -> new RuntimeException("Plan not found with id: " + planId));
 
+            // Validasi: Package status harus "Pending"
+            if (plan.getTourPackage() == null) {
+                logger.error("❌ Package not found for this plan");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Package Not Found",
+                            "message", "Package not found for this plan"
+                        ));
+            }
+            
+            if (!"Pending".equals(plan.getTourPackage().getStatus())) {
+                logger.error("❌ Cannot create ordered activity. Package status is not Pending: {}", 
+                           plan.getTourPackage().getStatus());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Invalid Package Status",
+                            "message", "Cannot create ordered activity. Package status must be 'Pending', current status: " + 
+                                      plan.getTourPackage().getStatus()
+                        ));
+            }
+
             Activity activity = activityRepository.findById(request.getActivityId())
                     .orElseThrow(() -> new RuntimeException("Activity not found with id: " + request.getActivityId()));
 
@@ -264,7 +285,39 @@ public class OrderedActivityRestController {
             OrderedQuantity orderedQuantity = orderedQuantityRepository.findById(UUID.fromString(orderedActivityId))
                     .orElseThrow(() -> new RuntimeException("Ordered activity not found"));
 
+            // Validasi: OrderedQuantity belum di-soft delete
+            if (Boolean.TRUE.equals(orderedQuantity.getIsDeleted())) {
+                logger.error("❌ Cannot update deleted ordered activity");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Already Deleted",
+                            "message", "Cannot update deleted ordered activity"
+                        ));
+            }
+
             Plan plan = orderedQuantity.getPlan();
+            
+            // Validasi: Package status harus "Pending"
+            if (plan.getTourPackage() == null) {
+                logger.error("❌ Package not found for this plan");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Package Not Found",
+                            "message", "Package not found for this plan"
+                        ));
+            }
+            
+            if (!"Pending".equals(plan.getTourPackage().getStatus())) {
+                logger.error("❌ Cannot update ordered activity. Package status is not Pending: {}", 
+                           plan.getTourPackage().getStatus());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Invalid Package Status",
+                            "message", "Cannot update ordered activity. Package status must be 'Pending', current status: " + 
+                                      plan.getTourPackage().getStatus()
+                        ));
+            }
+            
             Activity activity = orderedQuantity.getActivity();
 
             // Validasi capacity
@@ -349,6 +402,37 @@ public class OrderedActivityRestController {
                     .orElseThrow(() -> new RuntimeException("Ordered activity not found"));
 
             Plan plan = orderedQuantity.getPlan();
+            
+            // Validasi: Package status harus "Pending"
+            if (plan.getTourPackage() == null) {
+                logger.error("❌ Package not found for this plan");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Package Not Found",
+                            "message", "Package not found for this plan"
+                        ));
+            }
+            
+            if (!"Pending".equals(plan.getTourPackage().getStatus())) {
+                logger.error("❌ Cannot delete ordered activity. Package status is not Pending: {}", 
+                           plan.getTourPackage().getStatus());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Invalid Package Status",
+                            "message", "Cannot delete ordered activity. Package status must be 'Pending', current status: " + 
+                                      plan.getTourPackage().getStatus()
+                        ));
+            }
+            
+            // Validasi: OrderedQuantity belum di-soft delete
+            if (Boolean.TRUE.equals(orderedQuantity.getIsDeleted())) {
+                logger.error("❌ Ordered activity is already deleted");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Already Deleted",
+                            "message", "Ordered activity is already deleted"
+                        ));
+            }
 
             // Soft delete
             orderedQuantity.setIsDeleted(true);
