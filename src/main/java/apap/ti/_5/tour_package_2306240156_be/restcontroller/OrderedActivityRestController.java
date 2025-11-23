@@ -119,12 +119,58 @@ public class OrderedActivityRestController {
             Activity activity = activityRepository.findById(request.getActivityId())
                     .orElseThrow(() -> new RuntimeException("Activity not found with id: " + request.getActivityId()));
 
-            // Validasi 1: Ordered quantity tidak melebihi capacity activity
+            // ✅ Validasi 1: Activity quota > 0
+            if (activity.getCapacity() <= 0) {
+                logger.error("❌ Activity quota/capacity must be greater than 0");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Invalid Quota",
+                            "message", "Activity quota must be greater than 0, current: " + activity.getCapacity()
+                        ));
+            }
+
+            // ✅ Validasi 2: Activity price > 0
+            if (activity.getPrice() == null || activity.getPrice() <= 0) {
+                logger.error("❌ Activity price must be greater than 0");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Invalid Price",
+                            "message", "Activity price must be greater than 0, current: " + activity.getPrice()
+                        ));
+            }
+
+            // ✅ Validasi 3: orderedQuota ≥ 0
+            if (request.getOrderedQuantity() < 0) {
+                logger.error("❌ Ordered quantity cannot be negative");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Invalid Ordered Quantity",
+                            "message", "Ordered quantity must be greater than or equal to 0, received: " + request.getOrderedQuantity()
+                        ));
+            }
+
+            // ✅ Validasi 4: orderedQuota ≤ quota (capacity)
             if (request.getOrderedQuantity() > activity.getCapacity()) {
                 logger.error("❌ Ordered quantity exceeds activity capacity");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Ordered quantity (" + request.getOrderedQuantity() + 
-                              ") exceeds available capacity (" + activity.getCapacity() + ")");
+                        .body(java.util.Map.of(
+                            "error", "Capacity Exceeded",
+                            "message", "Ordered quantity (" + request.getOrderedQuantity() + 
+                                      ") exceeds available capacity (" + activity.getCapacity() + ")"
+                        ));
+            }
+
+            // ✅ Validasi 5: startDate < endDate
+            if (activity.getStartDate() != null && activity.getEndDate() != null) {
+                if (!activity.getEndDate().isAfter(activity.getStartDate())) {
+                    logger.error("❌ Activity end date must be after start date");
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(java.util.Map.of(
+                                "error", "Invalid Date Range",
+                                "message", "Activity end date must be after start date. Start: " + 
+                                          activity.getStartDate() + ", End: " + activity.getEndDate()
+                            ));
+                }
             }
 
             // Validasi 2: Total ordered quantity dari PLAN INI tidak melebihi package quota
