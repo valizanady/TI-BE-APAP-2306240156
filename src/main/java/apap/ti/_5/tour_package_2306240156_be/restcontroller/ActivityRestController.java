@@ -29,9 +29,10 @@ public class ActivityRestController {
      * GET /activities
      * Get all activities with optional filters and search
      * 
-     * Default: Shows all activities (Activity model doesn't have isDeleted field)
+     * Default: Shows only active activities (isDeleted = FALSE)
      * Default sorting: startDate ascending
      * 
+     * @param includeDeleted Optional - true to include deleted activities (default: false)
      * @param activityType Optional - filter by activity type
      * @param startLocation Optional - filter by start location
      * @param endLocation Optional - filter by end location
@@ -42,6 +43,7 @@ public class ActivityRestController {
      */
     @GetMapping
     public ResponseEntity<?> getAllActivities(
+            @RequestParam(required = false, defaultValue = "false") Boolean includeDeleted,
             @RequestParam(required = false) String activityType,
             @RequestParam(required = false) String startLocation,
             @RequestParam(required = false) String endLocation,
@@ -50,8 +52,8 @@ public class ActivityRestController {
             @RequestParam(required = false) String search) {
         
         try {
-            logger.info("🔍 GET /activities - activityType: {}, startLocation: {}, endLocation: {}, search: '{}'", 
-                       activityType, startLocation, endLocation, search);
+            logger.info("🔍 GET /activities - includeDeleted: {}, activityType: {}, startLocation: {}, endLocation: {}, search: '{}'", 
+                       includeDeleted, activityType, startLocation, endLocation, search);
 
             // 1. Fetch all activities
             List<Activity> activities = activityRepository.findAll();
@@ -59,6 +61,13 @@ public class ActivityRestController {
             // 2. Apply filters
             List<Activity> filteredActivities = activities.stream()
                     .filter(activity -> {
+                        // ✅ Filter: isDeleted (default show only active activities)
+                        if (!includeDeleted) {
+                            if (Boolean.TRUE.equals(activity.getIsDeleted())) {
+                                return false;
+                            }
+                        }
+                        
                         // Filter: activityType
                         if (activityType != null && !activityType.isEmpty()) {
                             if (activity.getActivityType() == null || 

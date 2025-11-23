@@ -33,6 +33,11 @@ public class Activity {
     private String startLocation;
     private String endLocation;
 
+    // Soft delete flag
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
     // 1 activity bisa muncul di banyak ordered quantity
     @OneToMany(mappedBy = "activity", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({"activity", "plan"})
