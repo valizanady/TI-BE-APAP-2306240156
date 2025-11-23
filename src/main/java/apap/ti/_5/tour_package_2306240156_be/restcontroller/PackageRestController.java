@@ -63,9 +63,17 @@ public class PackageRestController {
 
   @PostMapping("/create")
   public ResponseEntity<BaseResponseDTO<PackageResponseDTO>> create(@Valid @RequestBody CreatePackageRequestDTO req) {
-    var data = service.create(req);
-    var body = new BaseResponseDTO<>(201, "Created", new Date(), data);
-    return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    try {
+      var data = service.create(req);
+      var body = new BaseResponseDTO<>(201, "Created", new Date(), data);
+      return ResponseEntity.status(HttpStatus.CREATED).body(body);
+    } catch (IllegalArgumentException e) {
+      var body = new BaseResponseDTO<PackageResponseDTO>(400, e.getMessage(), new Date(), null);
+      return ResponseEntity.badRequest().body(body);
+    } catch (RuntimeException e) {
+      var body = new BaseResponseDTO<PackageResponseDTO>(500, "An error occurred: " + e.getMessage(), new Date(), null);
+      return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+    }
   }
 
   @DeleteMapping("/{id}/delete")
