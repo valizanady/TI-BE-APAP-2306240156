@@ -13,11 +13,23 @@ import java.util.Map;
 @Builder
 public class StatisticsResponseDTO {
     
-    private Integer year;
+    /**
+     * Period dalam format:
+     * - "YYYY" jika month = null (revenue per bulan dalam tahun)
+     * - "YYYY-MM" jika month disediakan (revenue untuk bulan tertentu)
+     */
+    private String period;
     
-    private Integer month; // null = all months
-    
-    private Map<String, Long> revenueByActivityType;
-    
+    /**
+     * Total revenue dari semua activity types
+     */
     private Long totalRevenue;
+    
+    /**
+     * Breakdown revenue per activity type (Flight, Accommodation, Vehicle Rental)
+     * Format:
+     * - Jika month disediakan: {"Flight": 10000, "Accommodation": 20000, ...}
+     * - Jika month = null: {"January": {"Flight": 1000, "totalRevenue": 5000, ...}, "February": {...}, ...}
+     */
+    private Map<String, Object> breakdown;
 }
