@@ -3,6 +3,7 @@ package apap.ti._5.tour_package_2306240156_be.repository;
 import apap.ti._5.tour_package_2306240156_be.model.Package;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
 
@@ -12,5 +13,8 @@ public interface PackageRepository extends JpaRepository<Package, String> {
 
     @Query("SELECT p FROM Package p WHERE p.status IS NULL OR p.status <> 'DELETED' ORDER BY p.startDate ASC")
     List<Package> findAllActive();
+
+    @Query("SELECT COUNT(p) FROM Package p WHERE p.id LIKE :prefix%")
+    long countByIdPrefix(@Param("prefix") String prefix);
 
 }

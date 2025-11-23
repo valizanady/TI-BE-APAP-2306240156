@@ -12,6 +12,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -91,9 +93,14 @@ public class TourPackageRestServiceImpl implements PackageRestService {
       throw new IllegalArgumentException("End date cannot be earlier than start date");
     }
 
-    // Urutan 3 digit per userId
-    long seq = repo.countByUserId(req.getUserId()) + 1;
-    String id = "PACK-%s-%s".formatted(req.getUserId(), String.format("%03d", seq));
+    // Generate ID dengan format PKG-{YYYYMMDD}-{XXX}
+    LocalDateTime now = LocalDateTime.now();
+    String dateStr = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+    String prefix = "PKG-" + dateStr + "-";
+    
+    // Count packages dengan prefix yang sama hari ini
+    long seq = repo.countByIdPrefix(prefix) + 1;
+    String id = prefix + String.format("%03d", seq);
 
     var entity = Package.builder()
         .id(id)
