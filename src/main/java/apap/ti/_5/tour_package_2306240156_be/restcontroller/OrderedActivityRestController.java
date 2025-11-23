@@ -366,7 +366,17 @@ public class OrderedActivityRestController {
             
             Activity activity = orderedQuantity.getActivity();
 
-            // Validasi capacity
+            // ✅ Validasi 1: orderedQuota ≥ 0
+            if (newQuantity == null || newQuantity < 0) {
+                logger.error("❌ New quantity cannot be null or negative");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "error", "Invalid Quantity",
+                            "message", "New quantity must be greater than or equal to 0, received: " + newQuantity
+                        ));
+            }
+
+            // ✅ Validasi 2: orderedQuota ≤ quota (capacity)
             if (newQuantity > activity.getCapacity()) {
                 logger.error("❌ New quantity exceeds activity capacity");
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -405,11 +415,17 @@ public class OrderedActivityRestController {
                         ));
             }
 
-            // Update
+            // ✅ Update OrderedQuantity untuk menyesuaikan dengan booking yang sudah dilakukan
+            // Update ordered quota (jumlah yang dipesan)
             orderedQuantity.setOrderedQuota(newQuantity);
+            // Update quota reference dari activity (untuk tracking)
             orderedQuantity.setQuota(activity.getCapacity());
+            // Recalculate total price berdasarkan new quantity
             orderedQuantity.setPrice(activity.getPrice() * newQuantity);
             orderedQuantityRepository.save(orderedQuantity);
+
+            logger.info("✅ Updated ordered quantity: {} → {}, Total price: {}", 
+                       orderedQuantity.getOrderedQuota(), newQuantity, orderedQuantity.getPrice());
 
             // Update plan status
             if (newTotal == packageQuota) {
