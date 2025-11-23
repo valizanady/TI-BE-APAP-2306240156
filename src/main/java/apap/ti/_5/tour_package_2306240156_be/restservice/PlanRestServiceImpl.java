@@ -32,27 +32,22 @@ public class PlanRestServiceImpl implements PlanRestService {
             throw new RuntimeException("Cannot create plan. Package status must be 'Pending'");
         }
 
-        // Validasi endDate tidak lebih dahulu dari startDate (termasuk waktu)
-        if (request.getEndDate().isBefore(request.getStartDate())) {
-            throw new RuntimeException(
-                String.format("End date/time (%s) cannot be before start date/time (%s)",
-                    request.getEndDate(), request.getStartDate())
-            );
+        // Validasi: startDate harus < endDate (strict less than, tidak boleh sama)
+        if (!request.getEndDate().isAfter(request.getStartDate())) {
+            throw new IllegalArgumentException("End date must be after start date");
         }
 
-        // Validasi startDate >= startDate Package (termasuk waktu)
-        // Boleh sama tanggal tapi jamnya harus sama atau setelah
+        // Validasi startDate >= startDate Package
         if (request.getStartDate().isBefore(tourPackage.getStartDate())) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                 String.format("Plan start date/time (%s) must be on or after package start date/time (%s)",
                     request.getStartDate(), tourPackage.getStartDate())
             );
         }
 
-        // Validasi endDate <= endDate Package (termasuk waktu)
-        // Boleh sama tanggal tapi jamnya harus sama atau sebelum
+        // Validasi endDate <= endDate Package
         if (request.getEndDate().isAfter(tourPackage.getEndDate())) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                 String.format("Plan end date/time (%s) must be on or before package end date/time (%s)",
                     request.getEndDate(), tourPackage.getEndDate())
             );
@@ -61,11 +56,11 @@ public class PlanRestServiceImpl implements PlanRestService {
         // Validasi startLocation dan endLocation untuk Accommodation
         if ("Accommodation".equals(request.getActivityType())) {
             if (!request.getStartLocation().equals(request.getEndLocation())) {
-                throw new RuntimeException("For Accommodation, start and end location must be the same");
+                throw new IllegalArgumentException("For Accommodation, start and end location must be the same");
             }
         }
 
-        // Buat Plan baru
+        // Buat Plan baru dengan UUID otomatis (JPA) dan status "Unfulfilled"
         Plan plan = Plan.builder()
                 .planName(request.getPlanName())
                 .activityType(request.getActivityType())
@@ -73,8 +68,8 @@ public class PlanRestServiceImpl implements PlanRestService {
                 .endDate(request.getEndDate())
                 .startLocation(request.getStartLocation())
                 .endLocation(request.getEndLocation())
-                .status("Unfulfilled")
-                .price(0L)
+                .status("Unfulfilled")  // ✅ Status default "Unfulfilled"
+                .price(0L)  // Price akan dihitung dari OrderedQuantities
                 .tourPackage(tourPackage)
                 .build();
 
