@@ -88,13 +88,19 @@ public class TourPackageRestServiceImpl implements PackageRestService {
 
   @Override
   public PackageResponseDTO create(CreatePackageRequestDTO req) {
-    // Rule: endDate tidak boleh sebelum startDate
+    LocalDateTime now = LocalDateTime.now();
+    
+    // Validasi: startDate harus >= now
+    if (req.getStartDate().isBefore(now)) {
+      throw new IllegalArgumentException("Start date cannot be earlier than current date and time");
+    }
+    
+    // Validasi: endDate tidak boleh sebelum startDate
     if (req.getEndDate().isBefore(req.getStartDate())) {
       throw new IllegalArgumentException("End date cannot be earlier than start date");
     }
 
     // Generate ID dengan format PKG-{YYYYMMDD}-{XXX}
-    LocalDateTime now = LocalDateTime.now();
     String dateStr = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
     String prefix = "PKG-" + dateStr + "-";
     
