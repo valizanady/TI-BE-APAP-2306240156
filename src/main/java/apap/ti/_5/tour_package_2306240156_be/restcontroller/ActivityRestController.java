@@ -2,6 +2,8 @@ package apap.ti._5.tour_package_2306240156_be.restcontroller;
 
 import apap.ti._5.tour_package_2306240156_be.model.Activity;
 import apap.ti._5.tour_package_2306240156_be.repository.ActivityRepository;
+import apap.ti._5.tour_package_2306240156_be.restdto.request.CreateActivityRequestDTO;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -152,4 +155,194 @@ public class ActivityRestController {
                     ));
         }
     }
+
+    /**
+     * GET /activities/{id}
+     * Get activity detail by Activity ID
+     * 
+     * Only shows details for activities with isDeleted = FALSE
+     * 
+     * @param id Activity ID (UUID string)
+     * @return Activity detail or 404 if not found/deleted
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getActivityById(@PathVariable String id) {
+        try {
+            logger.info("🔍 GET /activities/{} - Retrieving activity detail", id);
+
+            // 1. Find activity by ID
+            var activityOptional = activityRepository.findById(id);
+            
+            if (activityOptional.isEmpty()) {
+                logger.warn("❌ Activity with ID {} not found", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(java.util.Map.of(
+                            "status", 404,
+                            "message", "Activity with ID " + id + " not found"
+                        ));
+            }
+
+            Activity activity = activityOptional.get();
+
+            // 2. Check if activity is deleted
+            if (Boolean.TRUE.equals(activity.getIsDeleted())) {
+                logger.warn("❌ Activity with ID {} is deleted (isDeleted = true)", id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(java.util.Map.of(
+                            "status", 404,
+                            "message", "Activity with ID " + id + " not found"
+                        ));
+            }
+
+            // 3. Return activity detail
+            logger.info("✅ Activity with ID {} retrieved successfully", id);
+            return ResponseEntity.ok(java.util.Map.of(
+                "status", 200,
+                "message", "Activity retrieved successfully",
+                "data", activity
+            ));
+            
+        } catch (Exception e) {
+            logger.error("❌ Error retrieving activity detail for ID: {}", id, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(java.util.Map.of(
+                        "status", 500,
+                        "message", "Failed to retrieve activity: " + e.getMessage()
+                    ));
+        }
+    }
+
+    /**
+     * POST /activities
+     * Create a new activity
+     * 
+     * Vendor restrictions (TODO: Implement after RBAC):
+     * - Tour Package vendor: can create all activity types
+     * - Flight vendor: can only create Flight activities
+     * - Accommodation vendor: can only create Accommodation activities
+     * - Vehicle Rental vendor: can only create Vehicle Rental activities
+     * 
+     * Validations:
+     * - All attributes are required (not null/empty)
+     * - ActivityID auto-generated: ACT-{YYYYMMDD}-{XXX}
+     * - startDate < endDate
+     * - price > 0, capacity > 0
+     * - startDate >= now (cannot create activity in the past)
+     * 
+     * @param request CreateActivityRequestDTO with activity details
+     * @return Created activity or error response
+     */
+    @PostMapping
+    public ResponseEntity<?> createActivity(
+            @Valid @RequestBody CreateActivityRequestDTO request) {
+        
+        try {
+            logger.info("📝 POST /activities - activityType: {}", request.getActivityType());
+
+            // TODO: Uncomment when RBAC is implemented
+            // String vendorType = request header or JWT claim
+            // if (!isValidVendorForActivityType(vendorType, request.getActivityType())) {
+            //     String errorMsg = String.format(
+            //         "Vendor type '%s' is not authorized to create activity type '%s'", 
+            //         vendorType, request.getActivityType()
+            //     );
+            //     logger.warn("❌ {}", errorMsg);
+            //     return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            //             .body(java.util.Map.of(
+            //                 "status", 403,
+            //                 "message", errorMsg
+            //             ));
+            // }
+
+            // 1. Validate startDate < endDate
+            if (!request.getStartDate().isBefore(request.getEndDate())) {
+                logger.warn("❌ Start date must be before end date");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "status", 400,
+                            "message", "Start date must be before end date"
+                        ));
+            }
+
+            // 2. Validate startDate >= now (not in the past)
+            if (request.getStartDate().isBefore(LocalDateTime.now())) {
+                logger.warn("❌ Cannot create activity in the past");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(java.util.Map.of(
+                            "status", 400,
+                            "message", "Start date must be in the present or future"
+                        ));
+            }
+
+            // 3. Generate Activity ID: ACT-{YYYYMMDD}-{XXX}
+            LocalDateTime now = LocalDateTime.now();
+            String dateStr = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+            String prefix = "ACT-" + dateStr + "-";
+            
+            long seq = activityRepository.countByIdPrefix(prefix) + 1;
+            String activityId = prefix + String.format("%03d", seq);
+
+            // 4. Build and save activity
+            Activity activity = Activity.builder()
+                    .id(activityId)
+                    .activityName(request.getActivityName())
+                    .activityItem(request.getActivityItem())
+                    .activityType(request.getActivityType())
+                    .capacity(request.getCapacity())
+                    .price(request.getPrice())
+                    .startDate(request.getStartDate())
+                    .endDate(request.getEndDate())
+                    .startLocation(request.getStartLocation())
+                    .endLocation(request.getEndLocation())
+                    .isDeleted(false)
+                    .build();
+
+            Activity savedActivity = activityRepository.save(activity);
+
+            logger.info("✅ Activity created successfully with ID: {}", activityId);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(java.util.Map.of(
+                        "status", 201,
+                        "message", "Activity created successfully",
+                        "data", savedActivity
+                    ));
+            
+        } catch (Exception e) {
+            logger.error("❌ Error creating activity", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(java.util.Map.of(
+                        "status", 500,
+                        "message", "Failed to create activity: " + e.getMessage()
+                    ));
+        }
+    }
+
+    // TODO: Uncomment when RBAC is implemented
+    /**
+     * Validate if vendor type is allowed to create the specified activity type
+     * 
+     * Rules:
+     * - Tour Package: can create all types
+     * - Flight: can only create Flight
+     * - Accommodation: can only create Accommodation
+     * - Vehicle Rental: can only create Vehicle Rental
+     */
+    // private boolean isValidVendorForActivityType(String vendorType, String activityType) {
+    //     // Normalize strings (trim and case-insensitive comparison)
+    //     String normalizedVendor = vendorType.trim().toLowerCase();
+    //     String normalizedActivityType = activityType.trim().toLowerCase();
+
+    //     // Tour Package vendor can create all types
+    //     if (normalizedVendor.equals("tour package")) {
+    //         return true;
+    //     }
+
+    //     // Other vendors can only create their specific type
+    //     return switch (normalizedVendor) {
+    //         case "flight" -> normalizedActivityType.equals("flight");
+    //         case "accommodation" -> normalizedActivityType.equals("accommodation");
+    //         case "vehicle rental" -> normalizedActivityType.equals("vehicle rental");
+    //         default -> false; // Unknown vendor type
+    //     };
+    // }
 }

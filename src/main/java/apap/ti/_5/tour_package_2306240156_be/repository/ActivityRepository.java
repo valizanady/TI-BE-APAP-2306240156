@@ -27,4 +27,11 @@ public interface ActivityRepository extends JpaRepository<Activity, String> {
             @Param("startLocation") String startLocation,
             @Param("endLocation") String endLocation
     );
+
+    /**
+     * Count activities by ID prefix for auto-generating sequential IDs
+     * Example: prefix = "ACT-20251124-" → counts ACT-20251124-001, ACT-20251124-002, etc.
+     */
+    @Query("SELECT COUNT(a) FROM Activity a WHERE a.id LIKE CONCAT(:prefix, '%')")
+    long countByIdPrefix(@Param("prefix") String prefix);
 }
