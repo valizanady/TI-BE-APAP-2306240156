@@ -13,6 +13,10 @@
 - [10. Tipe Service Kubernetes](#10-tipe-service-kubernetes)
 - [11. Pelajaran dan Penerapan CI/CD](#11-pelajaran-dan-penerapan-cicd)
 
+Saya juga melakukan deployment melalui github, berikut link repository github saya:
+- TI BE: https://github.com/valizanady/TI-BE-APAP-2306240156.git 
+- TI FE: https://github.com/valizanady/TI-FE-APAP-2306240156.git 
+
 ---
 
 ## 1. Screenshot Deployment
