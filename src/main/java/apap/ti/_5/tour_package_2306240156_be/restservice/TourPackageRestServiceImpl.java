@@ -145,6 +145,11 @@ public class TourPackageRestServiceImpl implements PackageRestService {
       var pkg = repo.findById(id)
           .orElseThrow(() -> new RuntimeException("Package not found"));
 
+      // ✅ Validasi: quota harus > 0
+      if (dto.getQuota() <= 0) {
+          throw new IllegalArgumentException("Quota must be greater than 0");
+      }
+
       // ✅ Only allow update if status is Pending AND no active plans
       if (!"Pending".equalsIgnoreCase(pkg.getStatus())) {
           throw new RuntimeException("Package cannot be updated. Only packages with status 'Pending' can be edited.");

@@ -96,6 +96,14 @@ public class PackageRestController {
           var updated = service.updatePackage(id, dto);
           var body = new BaseResponseDTO<>(200, "Package updated successfully", new Date(), updated);
           return ResponseEntity.ok(body);
+      } catch (IllegalArgumentException e) {
+          BaseResponseDTO<PackageResponseDTO> body = new BaseResponseDTO<>(
+              400,
+              e.getMessage(),
+              new Date(),
+              null
+          );
+          return ResponseEntity.badRequest().body(body);
       } catch (RuntimeException e) {
           // ✅ Fixed: Pastikan tipe generic konsisten
           BaseResponseDTO<PackageResponseDTO> body = new BaseResponseDTO<>(
