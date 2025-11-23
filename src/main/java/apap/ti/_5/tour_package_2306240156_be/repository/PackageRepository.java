@@ -10,7 +10,7 @@ import java.util.List;
 public interface PackageRepository extends JpaRepository<Package, String> {
     long countByUserId(String userId);
 
-    @Query("SELECT p FROM Package p WHERE p.status IS NULL OR p.status <> 'DELETED'")
+    @Query("SELECT p FROM Package p WHERE p.status IS NULL OR p.status <> 'DELETED' ORDER BY p.startDate ASC")
     List<Package> findAllActive();
 
 }
