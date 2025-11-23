@@ -10,26 +10,26 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @CrossOrigin(origins = "${CORS_ALLOWED_ORIGINS}")
-@RequestMapping("/statistics")
+@RequestMapping("/api/statistics")
 @RequiredArgsConstructor
 public class StatisticsRestController {
 
     private final StatisticsRestService statisticsRestService;
 
     /**
-     * GET /statistics?year={year}&month={month}
-     * Calculate potential revenue by activity type
+     * GET /api/statistics/revenue?year={year}&month={month}
+     * Calculate revenue by activity type
      * 
      * @param year Required - Year to filter
      * @param month Optional - Month to filter (1-12), null = all months
      * @return Statistics with revenue breakdown
      */
-    @GetMapping
+    @GetMapping("/revenue")
     public ResponseEntity<BaseResponseDTO<StatisticsResponseDTO>> getPotentialRevenue(
             @RequestParam Integer year,
             @RequestParam(required = false) Integer month) {
         
-        System.out.println("🎯 GET /statistics?year=" + year + "&month=" + month);
+        System.out.println("🎯 GET /api/statistics/revenue?year=" + year + "&month=" + month);
         
         // Validate year
         if (year == null || year < 2000 || year > 2100) {
