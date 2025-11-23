@@ -128,49 +128,53 @@ public class PlanRestServiceImpl implements PlanRestService {
         
         System.out.println("✅ Plan has no ordered quantities, can proceed");
 
-        // 5. Validasi endDate tidak lebih dahulu dari startDate (termasuk waktu)
-        if (request.getEndDate().isBefore(request.getStartDate())) {
-            throw new RuntimeException(
-                String.format("End date/time (%s) cannot be before start date/time (%s)",
-                    request.getEndDate(), request.getStartDate())
-            );
+        // 5. Validasi: price harus > 0
+        if (request.getPrice() == null || request.getPrice() <= 0) {
+            throw new IllegalArgumentException("Price must be greater than 0");
         }
 
-        // 6. Validasi startDate >= startDate Package (termasuk waktu)
+        // 6. Validasi: startDate harus < endDate (strict less than, tidak boleh sama)
+        if (!request.getEndDate().isAfter(request.getStartDate())) {
+            throw new IllegalArgumentException("End date must be after start date");
+        }
+
+        // 7. Validasi startDate >= startDate Package
         if (request.getStartDate().isBefore(tourPackage.getStartDate())) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                 String.format("Plan start date/time (%s) must be on or after package start date/time (%s)",
                     request.getStartDate(), tourPackage.getStartDate())
             );
         }
 
-        // 7. Validasi endDate <= endDate Package (termasuk waktu)
+        // 8. Validasi endDate <= endDate Package
         if (request.getEndDate().isAfter(tourPackage.getEndDate())) {
-            throw new RuntimeException(
+            throw new IllegalArgumentException(
                 String.format("Plan end date/time (%s) must be on or before package end date/time (%s)",
                     request.getEndDate(), tourPackage.getEndDate())
             );
         }
 
-        // 8. Validasi startLocation dan endLocation untuk Accommodation
+        // 9. Validasi startLocation dan endLocation untuk Accommodation
         if ("Accommodation".equals(plan.getActivityType())) {
             if (!request.getStartLocation().equals(request.getEndLocation())) {
-                throw new RuntimeException("For Accommodation activity type, start and end location must be the same");
+                throw new IllegalArgumentException("For Accommodation activity type, start and end location must be the same");
             }
         }
         
         System.out.println("✅ All validations passed");
 
-        // 9. Update field-field yang diizinkan
+        // 10. Update field-field yang diizinkan
         String oldPlanName = plan.getPlanName();
         plan.setPlanName(request.getPlanName());
         plan.setStartDate(request.getStartDate());
         plan.setEndDate(request.getEndDate());
+        plan.setPrice(request.getPrice());  // ✅ Update price
         plan.setStartLocation(request.getStartLocation());
         plan.setEndLocation(request.getEndLocation());
         
         System.out.println("📝 Updating plan:");
         System.out.println("   Plan Name: " + oldPlanName + " → " + request.getPlanName());
+        System.out.println("   Price: " + plan.getPrice() + " → " + request.getPrice());
         System.out.println("   Start Date/Time: " + request.getStartDate());
         System.out.println("   End Date/Time: " + request.getEndDate());
         System.out.println("   Start Location: " + request.getStartLocation());

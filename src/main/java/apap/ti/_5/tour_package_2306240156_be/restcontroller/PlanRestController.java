@@ -161,6 +161,13 @@ public class PlanRestController {
                             .data(response)
                             .build());
 
+        } catch (IllegalArgumentException e) {
+            System.out.println("❌ Validation error: " + e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(BaseResponseDTO.<PlanResponseDTO>builder()
+                            .status(HttpStatus.BAD_REQUEST.value())
+                            .message(e.getMessage())
+                            .build());
         } catch (RuntimeException e) {
             System.out.println("❌ Business logic error: " + e.getMessage());
             e.printStackTrace();
