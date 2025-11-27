@@ -1,0 +1,70 @@
+meta {
+  name: POST Create Payment Method
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/payment-methods
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{superadminToken}}
+}
+
+body:json {
+  {
+    "methodName": "QRIS",
+    "provider": "BCA"
+  }
+}
+
+docs {
+  # POST Create Payment Method
+  
+  **Endpoint:** `POST /api/payment-methods`
+  
+  **Access:** Superadmin only
+  
+  ## Request Body
+  ```json
+  {
+    "methodName": "QRIS",      // Required, not blank
+    "provider": "BCA"           // Required, not blank
+  }
+  ```
+  
+  ## Validations
+  - ✅ `methodName` is required (not blank)
+  - ✅ `provider` is required (not blank)
+  - ✅ Default status is "Active"
+  - ✅ Auto-generated UUID for ID
+  - ✅ Auto-generated timestamps (createdAt, updatedAt)
+  
+  ## Expected Response (201 Created)
+  ```json
+  {
+    "status": 201,
+    "message": "Payment method created successfully",
+    "timestamp": "2025-11-05T12:00:00.000+07:00",
+    "data": {
+      "id": "acde070d-8c4c-4f0d-9d8a-162843c10333",
+      "methodName": "QRIS",
+      "provider": "BCA",
+      "status": "Active",
+      "createdAt": "2025-11-05T12:00:00",
+      "updatedAt": "2025-11-05T12:00:00",
+      "deletedAt": null
+    }
+  }
+  ```
+  
+  ## Test Scenarios
+  1. ✅ **Valid Request** - Creates payment method successfully
+  2. ❌ **Empty methodName** - Returns 400 Bad Request
+  3. ❌ **Empty provider** - Returns 400 Bad Request
+  4. ❌ **Missing fields** - Returns 400 Bad Request
+  5. ❌ **Customer token** - Returns 403 Forbidden (after RBAC)
+}

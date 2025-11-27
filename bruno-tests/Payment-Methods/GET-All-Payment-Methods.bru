@@ -1,0 +1,79 @@
+meta {
+  name: GET All Payment Methods
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/payment-methods
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{customerToken}}
+}
+
+tests {
+  test("should return 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+  
+  test("should return array of payment methods", function() {
+    const body = res.getBody();
+    expect(body.data).to.be.an('array');
+  });
+  
+  test("should not include deleted payment methods", function() {
+    const body = res.getBody();
+    body.data.forEach(method => {
+      expect(method.deletedAt).to.be.null;
+    });
+  });
+}
+
+docs {
+  # GET All Payment Methods
+  
+  **Endpoint:** `GET /api/payment-methods`
+  
+  **Access:** All authenticated users
+  
+  ## Query Parameters (Optional)
+  - `status` - Filter by status ("Active" or "Inactive")
+  
+  Example: `GET /api/payment-methods?status=Active`
+  
+  ## Expected Response (200 OK)
+  ```json
+  {
+    "status": 200,
+    "message": "Payment methods retrieved successfully",
+    "timestamp": "2025-11-24T10:30:00.000+07:00",
+    "data": [
+      {
+        "id": "uuid-1",
+        "methodName": "Credit Card",
+        "provider": "Visa",
+        "status": "Active",
+        "createdAt": "2025-11-24T10:00:00",
+        "updatedAt": "2025-11-24T10:00:00",
+        "deletedAt": null
+      },
+      {
+        "id": "uuid-2",
+        "methodName": "E-Wallet",
+        "provider": "GoPay",
+        "status": "Active",
+        "createdAt": "2025-11-24T10:15:00",
+        "updatedAt": "2025-11-24T10:15:00",
+        "deletedAt": null
+      }
+    ]
+  }
+  ```
+  
+  ## Filters
+  - Only shows payment methods with `deletedAt = null`
+  - Ordered by `createdAt` DESC (newest first)
+}

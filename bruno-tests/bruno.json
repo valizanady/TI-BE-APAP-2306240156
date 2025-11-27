@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Tour Package API - Top Up Transactions",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

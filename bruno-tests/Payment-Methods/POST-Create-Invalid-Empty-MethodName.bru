@@ -1,0 +1,51 @@
+meta {
+  name: POST Create - Invalid Empty MethodName
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/payment-methods
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{superadminToken}}
+}
+
+body:json {
+  {
+    "methodName": "",
+    "provider": "Visa"
+  }
+}
+
+tests {
+  test("should return 400 Bad Request", function() {
+    expect(res.status).to.equal(400);
+  });
+  
+  test("should have error message", function() {
+    const body = res.getBody();
+    expect(body.message).to.include("Method name");
+  });
+}
+
+docs {
+  # POST Create Payment Method - Invalid Empty MethodName
+  
+  **Test Case:** Validation for empty `methodName`
+  
+  ## Expected Behavior
+  - Returns **400 Bad Request**
+  - Error message: "Method name is required" or similar
+  
+  ## Request Body
+  ```json
+  {
+    "methodName": "",  // ❌ Empty string
+    "provider": "Visa"
+  }
+  ```
+}
