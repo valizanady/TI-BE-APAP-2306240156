@@ -2,7 +2,9 @@ package apap.ti._5.tour_package_2306240156_be.restservice;
 
 import apap.ti._5.tour_package_2306240156_be.restdto.external.ProfileResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.external.UpdateProfileRequestDTO;
+import apap.ti._5.tour_package_2306240156_be.restdto.request.TokenExchangeRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.BaseResponseDTO;
+import apap.ti._5.tour_package_2306240156_be.restdto.response.TokenExchangeResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
@@ -16,6 +18,94 @@ public class ProfileServiceClient {
     private final RestTemplate restTemplate;
 
     private final String PROFILE_BASE_URL = "https://acc-be.beel.my.id/api";
+
+    /**
+     * Exchange OTT (One-Time Token) for JWT access token
+     * Endpoint: POST /api/auth/exchange
+     * 
+     * @param ott One-Time Token from auth service redirect
+     * @return JWT access token or null if exchange fails
+     */
+    public String exchangeToken(String ott) {
+        try {
+            System.out.println("📞 Exchanging OTT for JWT token | OTT: " + ott);
+            
+            String url = PROFILE_BASE_URL + "/auth/exchange";
+            
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            
+            // Request body with OTT
+            TokenExchangeRequestDTO requestBody = TokenExchangeRequestDTO.builder()
+                    .ott(ott)
+                    .build();
+            
+            HttpEntity<TokenExchangeRequestDTO> entity = new HttpEntity<>(requestBody, headers);
+            
+            System.out.println("📤 Request to Profile Service:");
+            System.out.println("   URL: " + url);
+            System.out.println("   Body: {ott: " + ott + "}");
+            
+            // Get raw response string (OTT is single-use, so we can only call API once!)
+            ResponseEntity<String> rawResponse = restTemplate.exchange(
+                    url,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+            
+            System.out.println("📥 Raw Response from Profile Service:");
+            System.out.println("   Status: " + rawResponse.getStatusCode());
+            System.out.println("   Body: " + rawResponse.getBody());
+            
+            if (rawResponse.getStatusCode() != HttpStatus.OK || rawResponse.getBody() == null) {
+                System.err.println("❌ Token exchange failed with status: " + rawResponse.getStatusCode());
+                return null;
+            }
+            
+            // Parse JSON manually from raw response (to avoid calling API multiple times)
+            String responseBody = rawResponse.getBody();
+            
+            // Response format from Nabeel's service:
+            // {"status":200,"message":"...","timestamp":"...","data":{"token":"JWT_HERE",...}}
+            // Note: Field is "token", not "jwt"!
+            
+            try {
+                // Extract token from JSON using simple string parsing
+                // Look for "token":"..." pattern
+                int tokenIndex = responseBody.indexOf("\"token\":\"");
+                if (tokenIndex != -1) {
+                    int startIndex = tokenIndex + 9; // Length of "token":"
+                    int endIndex = responseBody.indexOf("\"", startIndex);
+                    
+                    if (endIndex != -1) {
+                        String jwt = responseBody.substring(startIndex, endIndex);
+                        System.out.println("✅ Token exchange successful!");
+                        System.out.println("   JWT: " + jwt.substring(0, Math.min(50, jwt.length())) + "...");
+                        System.out.println("   JWT length: " + jwt.length() + " characters");
+                        return jwt;
+                    }
+                }
+                
+                System.err.println("❌ Could not extract 'token' field from response");
+                System.err.println("   Response body: " + responseBody.substring(0, Math.min(200, responseBody.length())));
+                
+            } catch (Exception parseException) {
+                System.err.println("❌ Failed to parse JWT from response");
+                System.err.println("   Error: " + parseException.getMessage());
+            }
+            
+            return null;
+            
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            System.err.println("❌ HTTP Error during token exchange: " + e.getStatusCode() + " - " + e.getResponseBodyAsString());
+            return null;
+        } catch (Exception e) {
+            System.err.println("❌ Failed to exchange token: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
 
     /**
      * Get user profile dari Profile Service menggunakan JWT token

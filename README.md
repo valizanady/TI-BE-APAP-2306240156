@@ -1,5 +1,23 @@
 # Dokumentasi Deployment CI/CD
 
+## 📚 Authentication Documentation
+
+**Important:** This project uses Nabeel's SSO authentication with OTT Exchange pattern.
+
+**Documentation:**
+- 🔥 **[Backend Auth API](./bruno-tests/Auth/README.md)** - OTT exchange endpoint, JWT payload structure, testing guide
+- 🔥 **[Frontend Auth Flow Guide](../tour-package-2306240156-fe/AUTH-FLOW-SYNC-GUIDE.md)** - Complete 13-step authentication flow with diagrams
+- 🧪 **[Frontend Testing Guide](../tour-package-2306240156-fe/LOGIN-TEST-GUIDE.md)** - Step-by-step manual testing
+- 📝 **[Auth Implementation Summary](./AUTH-IMPLEMENTATION-SUMMARY.md)** - Backend authentication implementation details
+
+**Key Points:**
+- Backend returns `{ data: { jwt: "..." } }` NOT `{ data: { token: "..." } }`
+- Frontend stores JWT in localStorage with key `"token"`
+- All API calls include `Authorization: Bearer <JWT>` header
+- OTT is single-use and expires in ~30 seconds
+
+---
+
 ## Daftar Isi
 - [1. Screenshot Deployment](#1-screenshot-deployment)
 - [2. Pipeline CI/CD Spring Boot](#2-pipeline-cicd-spring-boot)

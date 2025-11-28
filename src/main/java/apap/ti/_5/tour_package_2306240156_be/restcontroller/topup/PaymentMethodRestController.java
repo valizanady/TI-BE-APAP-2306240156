@@ -27,10 +27,14 @@ public class PaymentMethodRestController {
     /**
      * GET /api/payment-methods
      * Get all payment methods
-     * Access: Superadmin only
+     * Access: Customer & Superadmin (Customer needs this for top-up dropdown)
+     * 
+     * Usage:
+     * - Customer: GET /api/payment-methods?status=Active (for dropdown in top-up form)
+     * - Superadmin: GET /api/payment-methods (all payment methods for management)
      */
     @GetMapping
-    @PreAuthorize("hasRole('Superadmin')")
+    @PreAuthorize("hasAnyRole('Customer', 'Superadmin')")
     public ResponseEntity<BaseResponseDTO<List<PaymentMethod>>> getAllPaymentMethods(
             @RequestParam(required = false) String status
     ) {
@@ -54,10 +58,10 @@ public class PaymentMethodRestController {
     /**
      * GET /api/payment-methods/{id}
      * Get payment method by ID
-     * Access: Superadmin only
+     * Access: Customer & Superadmin (Customer might need payment method details)
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('Superadmin')")
+    @PreAuthorize("hasAnyRole('Customer', 'Superadmin')")
     public ResponseEntity<BaseResponseDTO<PaymentMethod>> getPaymentMethodById(@PathVariable UUID id) {
         PaymentMethod paymentMethod = paymentMethodRestService.getPaymentMethodById(id);
         

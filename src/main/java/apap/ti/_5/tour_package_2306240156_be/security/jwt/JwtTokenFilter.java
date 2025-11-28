@@ -42,11 +42,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String requestPath = request.getRequestURI();
+        logger.info("📍 Request: {} {}", request.getMethod(), requestPath);
+
         String token = parseJwt(request);
 
         if (token != null) {
             try {
                 logger.info("🔐 Validating JWT token with Profile Service");
+                logger.info("   Token (first 30 chars): {}...", token.substring(0, Math.min(30, token.length())));
                 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setBearerAuth(token);
@@ -61,7 +65,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 );
 
                 if (responseFromExternal.getStatusCode() == HttpStatus.OK) {
-                    logger.info("✅ Token valid");
+                    logger.info("✅ Token valid from Profile Service");
                     
                     // Extract role, email, username, dan userId dari token
                     String role = jwtUtils.getRoleFromToken(token);
@@ -73,13 +77,19 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     if (role == null) role = "Customer";
                     if (email == null) email = username != null ? username : "User";
 
-                    logger.info("User: {}, Role: {}, UserId: {}", email, role, userId);
+                    logger.info("👤 User Info:");
+                    logger.info("   Email: {}", email);
+                    logger.info("   Username: {}", username);
+                    logger.info("   Role: {}", role);
+                    logger.info("   UserId: {}", userId);
 
                     // Set Spring Security Context (untuk @PreAuthorize)
                     // Tambahkan prefix "ROLE_" untuk kompatibilitas dengan hasRole()
                     List<SimpleGrantedAuthority> authorities = Collections.singletonList(
                         new SimpleGrantedAuthority("ROLE_" + role)
                     );
+                    
+                    logger.info("🔑 Granted Authorities: {}", authorities);
                     
                     // Gunakan email/username sebagai principal
                     UserDetails userDetails = new User(email, "", authorities);
@@ -96,12 +106,17 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                     
                     authentication.setDetails(details);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                    
+                    logger.info("✅ Security context set successfully");
                 }
 
             } catch (Exception e) {
                 // Token tidak valid (401 dari Profile Service)
                 logger.error("❌ Token validation failed: " + e.getMessage());
+                logger.error("   Error class: " + e.getClass().getName());
             }
+        } else {
+            logger.info("⚠️  No JWT token found in request");
         }
 
         filterChain.doFilter(request, response);

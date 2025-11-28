@@ -1,0 +1,106 @@
+meta {
+  name: POST-Exchange-OTT-for-JWT
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{BASE_URL}}/api/auth/exchange
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "ott": "2U9ZTI"
+  }
+}
+
+docs {
+  # Token Exchange - OTT to JWT
+  
+  ## Purpose
+  Exchange One-Time Token (OTT) from auth service redirect for a JWT access token.
+  
+  ## Flow
+  1. User logs in via: https://acc-fe.beel.my.id/auth/login?callback=http://localhost:8080/
+  2. Auth service redirects to: http://localhost:8080/?token=JWT_TOKEN
+  3. Backend redirects to: http://localhost:5173/?token=JWT_TOKEN
+  4. Frontend detects token and redirects to: http://localhost:5173/login-success/auth?ott=2U9ZTI
+  5. Frontend calls this endpoint with OTT
+  6. Backend exchanges OTT for JWT token via: https://acc-be.beel.my.id/api/auth/exchange
+  7. Frontend receives JWT and stores it for subsequent API calls
+  
+  ## Request
+  ```json
+  {
+    "ott": "2U9ZTI"
+  }
+  ```
+  
+  ## Success Response (200)
+  ```json
+  {
+    "status": 200,
+    "message": "Token exchange successful",
+    "timestamp": "2025-11-27T09:30:00.000+07:00",
+    "data": {
+      "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    }
+  }
+  ```
+  
+  ## Error Responses
+  
+  ### 400 - Missing OTT
+  ```json
+  {
+    "status": 400,
+    "message": "OTT is required",
+    "timestamp": "2025-11-27T09:30:00.000+07:00",
+    "data": null
+  }
+  ```
+  
+  ### 401 - Invalid OTT
+  ```json
+  {
+    "status": 401,
+    "message": "Token exchange failed. OTT may be invalid or expired.",
+    "timestamp": "2025-11-27T09:30:00.000+07:00",
+    "data": null
+  }
+  ```
+  
+  ## Usage in Frontend
+  ```javascript
+  // After redirect to /login-success/auth?ott=2U9ZTI
+  const urlParams = new URLSearchParams(window.location.search);
+  const ott = urlParams.get('ott');
+  
+  if (ott) {
+    const response = await fetch('http://localhost:8080/api/auth/exchange', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ ott })
+    });
+    
+    const result = await response.json();
+    
+    if (result.status === 200) {
+      const jwt = result.data.jwt;
+      // Store JWT in localStorage or Vuex store
+      localStorage.setItem('jwt_token', jwt);
+      
+      // Now use JWT for API calls
+      const profileResponse = await fetch('http://localhost:8080/api/profile', {
+        headers: {
+          'Authorization': `Bearer ${jwt}`
+        }
+      });
+    }
+  }
+  ```
+}
