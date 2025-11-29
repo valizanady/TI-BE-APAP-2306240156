@@ -129,57 +129,84 @@ public class PlanRestServiceImpl implements PlanRestService {
         
         System.out.println("✅ Plan has no ordered quantities, can proceed");
 
-        // 5. Validasi: price harus > 0
-        if (request.getPrice() == null || request.getPrice() <= 0) {
+        // 5. Validasi field yang diberikan (hanya jika tidak null)
+        
+        // Validate price if provided
+        if (request.getPrice() != null && request.getPrice() <= 0) {
             throw new IllegalArgumentException("Price must be greater than 0");
         }
 
-        // 6. Validasi: startDate harus < endDate (strict less than, tidak boleh sama)
-        if (!request.getEndDate().isAfter(request.getStartDate())) {
-            throw new IllegalArgumentException("End date must be after start date");
+        // Validate dates if both provided
+        if (request.getStartDate() != null && request.getEndDate() != null) {
+            if (!request.getEndDate().isAfter(request.getStartDate())) {
+                throw new IllegalArgumentException("End date must be after start date");
+            }
+        }
+        
+        // 6. Validate startDate against package if provided
+        if (request.getStartDate() != null) {
+            if (request.getStartDate().isBefore(tourPackage.getStartDate())) {
+                throw new IllegalArgumentException(
+                    String.format("Plan start date/time (%s) must be on or after package start date/time (%s)",
+                        request.getStartDate(), tourPackage.getStartDate())
+                );
+            }
         }
 
-        // 7. Validasi startDate >= startDate Package
-        if (request.getStartDate().isBefore(tourPackage.getStartDate())) {
-            throw new IllegalArgumentException(
-                String.format("Plan start date/time (%s) must be on or after package start date/time (%s)",
-                    request.getStartDate(), tourPackage.getStartDate())
-            );
-        }
-
-        // 8. Validasi endDate <= endDate Package
-        if (request.getEndDate().isAfter(tourPackage.getEndDate())) {
-            throw new IllegalArgumentException(
-                String.format("Plan end date/time (%s) must be on or before package end date/time (%s)",
-                    request.getEndDate(), tourPackage.getEndDate())
-            );
+        // 7. Validate endDate against package if provided
+        if (request.getEndDate() != null) {
+            if (request.getEndDate().isAfter(tourPackage.getEndDate())) {
+                throw new IllegalArgumentException(
+                    String.format("Plan end date/time (%s) must be on or before package end date/time (%s)",
+                        request.getEndDate(), tourPackage.getEndDate())
+                );
+            }
         }
 
         // 9. Validasi startLocation dan endLocation untuk Accommodation
         if ("Accommodation".equals(plan.getActivityType())) {
-            if (!request.getStartLocation().equals(request.getEndLocation())) {
-                throw new IllegalArgumentException("For Accommodation activity type, start and end location must be the same");
+            // Only validate if both locations are provided
+            if (request.getStartLocation() != null && request.getEndLocation() != null) {
+                if (!request.getStartLocation().equals(request.getEndLocation())) {
+                    throw new IllegalArgumentException("For Accommodation activity type, start and end location must be the same");
+                }
             }
         }
         
         System.out.println("✅ All validations passed");
 
-        // 10. Update field-field yang diizinkan
+        // 10. Update ONLY the fields that are provided (not null)
         String oldPlanName = plan.getPlanName();
-        plan.setPlanName(request.getPlanName());
-        plan.setStartDate(request.getStartDate());
-        plan.setEndDate(request.getEndDate());
-        plan.setPrice(request.getPrice());  // ✅ Update price
-        plan.setStartLocation(request.getStartLocation());
-        plan.setEndLocation(request.getEndLocation());
         
-        System.out.println("📝 Updating plan:");
-        System.out.println("   Plan Name: " + oldPlanName + " → " + request.getPlanName());
-        System.out.println("   Price: " + plan.getPrice() + " → " + request.getPrice());
-        System.out.println("   Start Date/Time: " + request.getStartDate());
-        System.out.println("   End Date/Time: " + request.getEndDate());
-        System.out.println("   Start Location: " + request.getStartLocation());
-        System.out.println("   End Location: " + request.getEndLocation());
+        if (request.getPlanName() != null) {
+            plan.setPlanName(request.getPlanName());
+            System.out.println("   Plan Name: " + oldPlanName + " → " + request.getPlanName());
+        }
+        
+        if (request.getStartDate() != null) {
+            plan.setStartDate(request.getStartDate());
+            System.out.println("   Start Date/Time: → " + request.getStartDate());
+        }
+        
+        if (request.getEndDate() != null) {
+            plan.setEndDate(request.getEndDate());
+            System.out.println("   End Date/Time: → " + request.getEndDate());
+        }
+        
+        if (request.getPrice() != null) {
+            plan.setPrice(request.getPrice());
+            System.out.println("   Price: → " + request.getPrice());
+        }
+        
+        if (request.getStartLocation() != null) {
+            plan.setStartLocation(request.getStartLocation());
+            System.out.println("   Start Location: → " + request.getStartLocation());
+        }
+        
+        if (request.getEndLocation() != null) {
+            plan.setEndLocation(request.getEndLocation());
+            System.out.println("   End Location: → " + request.getEndLocation());
+        }
 
         // 10. Save dan return
         Plan updatedPlan = planRepository.save(plan);

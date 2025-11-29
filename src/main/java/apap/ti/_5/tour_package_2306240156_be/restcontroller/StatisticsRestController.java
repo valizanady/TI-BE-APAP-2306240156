@@ -3,9 +3,11 @@ package apap.ti._5.tour_package_2306240156_be.restcontroller;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.BaseResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.StatisticsResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restservice.StatisticsRestService;
+import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -17,8 +19,17 @@ public class StatisticsRestController {
     private final StatisticsRestService statisticsRestService;
 
     /**
+     * Helper method to check if user has statistics access
+     * Only Superadmin and TourPackageVendor can access statistics
+     */
+    private boolean hasStatisticsAccess(String role) {
+        return "Superadmin".equals(role) || "TourPackageVendor".equals(role);
+    }
+
+    /**
      * GET /api/statistics/revenue?year={year}&month={month}
      * Calculate revenue by activity type
+     * RBAC: Only Superadmin and TourPackageVendor can access
      * 
      * @param year Required - Year to filter
      * @param month Optional - Month to filter (1-12), null = all months
@@ -26,10 +37,22 @@ public class StatisticsRestController {
      */
     @GetMapping("/revenue")
     public ResponseEntity<BaseResponseDTO<StatisticsResponseDTO>> getPotentialRevenue(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @RequestParam Integer year,
             @RequestParam(required = false) Integer month) {
         
         System.out.println("🎯 GET /api/statistics/revenue?year=" + year + "&month=" + month);
+        System.out.println("👤 User role: " + user.getRole());
+        
+        // Authorization check
+        if (!hasStatisticsAccess(user.getRole())) {
+            System.out.println("❌ Access denied for role: " + user.getRole());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(BaseResponseDTO.<StatisticsResponseDTO>builder()
+                            .status(HttpStatus.FORBIDDEN.value())
+                            .message("Access denied. Only Superadmin and TourPackageVendor can access statistics.")
+                            .build());
+        }
         
         // Validate year
         if (year == null || year < 2000 || year > 2100) {
@@ -76,15 +99,28 @@ public class StatisticsRestController {
      * GET /api/statistics/revenue/yearly/{year}
      * Mengembalikan statistik revenue per bulan dalam satu tahun
      * Data diambil dari OrderedActivities yang sudah fulfilled (Package status = "Processed")
+     * RBAC: Only Superadmin and TourPackageVendor can access
      * 
      * @param year Year to filter (path variable)
      * @return Revenue per bulan (Jan-Des) dalam tahun tersebut
      */
     @GetMapping("/revenue/yearly/{year}")
     public ResponseEntity<BaseResponseDTO<StatisticsResponseDTO>> getYearlyRevenue(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable Integer year) {
         
         System.out.println("🎯 GET /api/statistics/revenue/yearly/" + year);
+        System.out.println("👤 User role: " + user.getRole());
+        
+        // Authorization check
+        if (!hasStatisticsAccess(user.getRole())) {
+            System.out.println("❌ Access denied for role: " + user.getRole());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(BaseResponseDTO.<StatisticsResponseDTO>builder()
+                            .status(HttpStatus.FORBIDDEN.value())
+                            .message("Access denied. Only Superadmin and TourPackageVendor can access statistics.")
+                            .build());
+        }
         
         // Validate year
         if (year == null || year < 2000 || year > 2100) {
@@ -124,6 +160,7 @@ public class StatisticsRestController {
      * Mengembalikan detail statistik revenue untuk satu bulan tertentu
      * Response mencakup totalRevenue dan breakdown per activityType
      * Data diambil dari OrderedActivities yang sudah fulfilled (Package status = "Processed")
+     * RBAC: Only Superadmin and TourPackageVendor can access
      * 
      * @param year Year to filter (path variable)
      * @param month Month to filter 1-12 (path variable)
@@ -131,10 +168,22 @@ public class StatisticsRestController {
      */
     @GetMapping("/revenue/monthly/{year}/{month}")
     public ResponseEntity<BaseResponseDTO<StatisticsResponseDTO>> getMonthlyRevenue(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @PathVariable Integer year,
             @PathVariable Integer month) {
         
         System.out.println("🎯 GET /api/statistics/revenue/monthly/" + year + "/" + month);
+        System.out.println("👤 User role: " + user.getRole());
+        
+        // Authorization check
+        if (!hasStatisticsAccess(user.getRole())) {
+            System.out.println("❌ Access denied for role: " + user.getRole());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(BaseResponseDTO.<StatisticsResponseDTO>builder()
+                            .status(HttpStatus.FORBIDDEN.value())
+                            .message("Access denied. Only Superadmin and TourPackageVendor can access statistics.")
+                            .build());
+        }
         
         // Validate year
         if (year == null || year < 2000 || year > 2100) {

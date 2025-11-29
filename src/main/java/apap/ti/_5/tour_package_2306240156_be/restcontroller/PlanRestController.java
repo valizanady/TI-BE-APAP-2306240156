@@ -6,10 +6,14 @@ import apap.ti._5.tour_package_2306240156_be.restdto.response.BaseResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.PlanResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.PlanDetailResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restservice.PlanRestService;
+import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,18 +21,53 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/plans")
+@RequestMapping("/api/plans")
 @RequiredArgsConstructor
 public class PlanRestController {
 
+    private static final Logger logger = LoggerFactory.getLogger(PlanRestController.class);
     private final PlanRestService planRestService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getPlanDetail(@PathVariable UUID id) {
-        System.out.println("🎯 Received GET request: /plans/" + id);
+    public ResponseEntity<?> getPlanDetail(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        
+        logger.info("🎯 GET /plans/{} - Fetching plan detail", id);
+        
+        // ✅ DEBUG: Check if user is null
+        if (user == null) {
+            logger.error("❌ AuthenticatedUser is NULL - SecurityContext not set properly");
+            var errorResponse = new java.util.HashMap<String, Object>();
+            errorResponse.put("status", 401);
+            errorResponse.put("message", "Authentication required");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+        }
+        
+        logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
+        logger.info("👤 User object: {}", user);
 
         try {
             Plan plan = planRestService.getPlanById(id);
+            
+            // ✅ Authorization check for Customer
+            if (!user.hasAdminPrivileges()) {
+                String packageUserId = plan.getTourPackage().getUserId();
+                
+                logger.info("🔍 Authorization check: packageUserId={}, currentUserId={}", 
+                           packageUserId, user.getId());
+                
+                if (packageUserId == null || !packageUserId.equals(user.getId())) {
+                    logger.warn("❌ Access denied: Customer {} cannot view plan {} from package owned by {}", 
+                                user.getId(), id, packageUserId);
+                    var errorResponse = new java.util.HashMap<String, Object>();
+                    errorResponse.put("status", 403);
+                    errorResponse.put("message", "Access denied: You can only view plans from your own packages");
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
+                }
+            }
+            
+            logger.info("✅ Access granted: Plan detail retrieved successfully");
 
             // Build ordered quantities response dengan quota dari activity.capacity
             var orderedQuantitiesResponse = plan.getOrderedQuantities().stream()
@@ -64,10 +103,12 @@ public class PlanRestController {
             response.put("endDate", plan.getEndDate());
             response.put("startLocation", plan.getStartLocation());
             response.put("endLocation", plan.getEndLocation());
-            response.put("price", totalPrice);
+            response.put("price", totalPrice); // Total calculated price for display
+            response.put("planPrice", plan.getPrice()); // ✅ Original plan price for edit
             response.put("packageId", plan.getTourPackage().getId());
             response.put("packageName", plan.getTourPackage().getPackageName());
             response.put("packageStatus", plan.getTourPackage().getStatus());
+            response.put("packageUserId", plan.getTourPackage().getUserId()); // ✅ Add for RBAC
             response.put("orderedQuantities", orderedQuantitiesResponse);
 
             System.out.println("📦 Package Status: " + plan.getTourPackage().getStatus());
@@ -131,17 +172,18 @@ public class PlanRestController {
     public ResponseEntity<BaseResponseDTO<PlanResponseDTO>> updatePlan(
             @PathVariable UUID id,
             @Valid @RequestBody UpdatePlanRequestDTO request,
+            @AuthenticationPrincipal AuthenticatedUser user,
             BindingResult bindingResult) {
 
-        System.out.println("🎯 Received PUT request: /plans/" + id + "/edit");
-        System.out.println("📦 Request body: " + request);
+        logger.info("🎯 PUT /plans/{}/edit - Updating plan", id);
+        logger.info("� User: ID={}, Role={}", user.getId(), user.getRole());
 
         if (bindingResult.hasErrors()) {
             String errorMessage = bindingResult.getAllErrors().stream()
                     .map(error -> error.getDefaultMessage())
                     .collect(Collectors.joining(", "));
 
-            System.out.println("❌ Validation error: " + errorMessage);
+            logger.error("❌ Validation error: {}", errorMessage);
             return ResponseEntity.badRequest()
                     .body(BaseResponseDTO.<PlanResponseDTO>builder()
                             .status(HttpStatus.BAD_REQUEST.value())
@@ -150,10 +192,27 @@ public class PlanRestController {
         }
 
         try {
+            // ✅ Authorization check BEFORE update
+            Plan existingPlan = planRestService.getPlanById(id);
+            
+            if (!user.hasAdminPrivileges()) {
+                String packageUserId = existingPlan.getTourPackage().getUserId();
+                
+                if (packageUserId == null || !packageUserId.equals(user.getId())) {
+                    logger.warn("❌ Access denied: Customer {} cannot update plan {} from package owned by {}", 
+                                user.getId(), id, packageUserId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(BaseResponseDTO.<PlanResponseDTO>builder()
+                                    .status(HttpStatus.FORBIDDEN.value())
+                                    .message("Access denied: You can only update plans from your own packages")
+                                    .build());
+                }
+            }
+            
             Plan plan = planRestService.updatePlan(id, request);
             PlanResponseDTO response = PlanResponseDTO.fromEntity(plan);
 
-            System.out.println("✅ Plan updated successfully: " + plan.getId());
+            logger.info("✅ Plan updated successfully: {}", plan.getId());
             return ResponseEntity.ok()
                     .body(BaseResponseDTO.<PlanResponseDTO>builder()
                             .status(HttpStatus.OK.value())
@@ -180,13 +239,34 @@ public class PlanRestController {
     }
 
     @DeleteMapping("/{id}") // ✅ Already correct
-    public ResponseEntity<BaseResponseDTO<Void>> deletePlan(@PathVariable UUID id) {
-        System.out.println("🎯 Received DELETE request: /plans/" + id);
+    public ResponseEntity<BaseResponseDTO<Void>> deletePlan(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        
+        logger.info("🎯 DELETE /plans/{} - Deleting plan", id);
+        logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
         
         try {
+            // ✅ Authorization check BEFORE delete
+            Plan existingPlan = planRestService.getPlanById(id);
+            
+            if (!user.hasAdminPrivileges()) {
+                String packageUserId = existingPlan.getTourPackage().getUserId();
+                
+                if (packageUserId == null || !packageUserId.equals(user.getId())) {
+                    logger.warn("❌ Access denied: Customer {} cannot delete plan {} from package owned by {}", 
+                                user.getId(), id, packageUserId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(BaseResponseDTO.<Void>builder()
+                                    .status(HttpStatus.FORBIDDEN.value())
+                                    .message("Access denied: You can only delete plans from your own packages")
+                                    .build());
+                }
+            }
+            
             planRestService.deletePlan(id);
             
-            System.out.println("✅ Plan deleted successfully: " + id);
+            logger.info("✅ Plan deleted successfully: {}", id);
             return ResponseEntity.ok()
                     .body(BaseResponseDTO.<Void>builder()
                             .status(HttpStatus.OK.value())
@@ -194,7 +274,7 @@ public class PlanRestController {
                             .build());
                             
         } catch (RuntimeException e) {
-            System.out.println("❌ Error deleting plan: " + e.getMessage());
+            logger.error("❌ Error deleting plan: {}", e.getMessage());
             return ResponseEntity.badRequest()
                     .body(BaseResponseDTO.<Void>builder()
                             .status(HttpStatus.BAD_REQUEST.value())

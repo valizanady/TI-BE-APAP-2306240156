@@ -1,0 +1,88 @@
+meta {
+  name: POST Create Bundle - Multiple Plans
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/package/create-bundle
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "packageName": "Paket Tour 3 Hari Jakarta-Bandung",
+    "userId": "user-002",
+    "quota": 20,
+    "startDate": "2025-12-15T06:00:00",
+    "endDate": "2025-12-17T20:00:00",
+    "plans": [
+      {
+        "planName": "Day 1 - Departure Jakarta",
+        "activityType": "Transportation",
+        "startDate": "2025-12-15T08:00:00",
+        "endDate": "2025-12-15T12:00:00",
+        "startLocation": "Jakarta",
+        "endLocation": "Bandung",
+        "orderedActivities": [
+          {
+            "activityId": "ACT-TRANS-001",
+            "orderedQuantity": 20
+          }
+        ]
+      },
+      {
+        "planName": "Day 2 - Bandung City Tour",
+        "activityType": "Cultural",
+        "startDate": "2025-12-16T09:00:00",
+        "endDate": "2025-12-16T17:00:00",
+        "startLocation": "Bandung",
+        "endLocation": "Bandung",
+        "orderedActivities": [
+          {
+            "activityId": "ACT-TOUR-001",
+            "orderedQuantity": 10
+          },
+          {
+            "activityId": "ACT-TOUR-002",
+            "orderedQuantity": 10
+          }
+        ]
+      },
+      {
+        "planName": "Day 3 - Return to Jakarta",
+        "activityType": "Transportation",
+        "startDate": "2025-12-17T14:00:00",
+        "endDate": "2025-12-17T18:00:00",
+        "startLocation": "Bandung",
+        "endLocation": "Jakarta",
+        "orderedActivities": [
+          {
+            "activityId": "ACT-TRANS-002",
+            "orderedQuantity": 20
+          }
+        ]
+      }
+    ]
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Should have 3 plans", function() {
+    expect(res.body.data.createdPlans).to.have.lengthOf(3);
+  });
+  
+  test("All plans should be Fulfilled", function() {
+    const allFulfilled = res.body.data.createdPlans.every(plan => plan.status === 'Fulfilled');
+    expect(allFulfilled).to.be.true;
+  });
+  
+  test("Total price should be calculated", function() {
+    expect(res.body.data.totalPrice).to.be.greaterThan(0);
+  });
+}

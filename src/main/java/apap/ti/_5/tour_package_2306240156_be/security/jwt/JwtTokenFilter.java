@@ -1,5 +1,6 @@
 package apap.ti._5.tour_package_2306240156_be.security.jwt;
 
+import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -8,20 +9,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Component
@@ -39,7 +35,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private final String AUTH_URL = "https://acc-be.beel.my.id/api/auth/me";
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, 
+                                    @NonNull HttpServletResponse response, 
+                                    @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
         String requestPath = request.getRequestURI();
@@ -57,6 +55,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 HttpEntity<String> entity = new HttpEntity<>(headers);
 
                 // Hit API Profile Service untuk validasi token
+                @SuppressWarnings("rawtypes")
                 ResponseEntity<Map> responseFromExternal = restTemplate.exchange(
                         AUTH_URL,
                         HttpMethod.GET,
@@ -67,47 +66,48 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 if (responseFromExternal.getStatusCode() == HttpStatus.OK) {
                     logger.info("✅ Token valid from Profile Service");
                     
-                    // Extract role, email, username, dan userId dari token
+                    // Extract role, email, username, name, dan userId dari token
                     String role = jwtUtils.getRoleFromToken(token);
                     String email = jwtUtils.getEmailFromToken(token);
                     String username = jwtUtils.getUsernameFromToken(token);
                     String userId = jwtUtils.getUserIdFromToken(token);
+                    String name = jwtUtils.getNameFromToken(token);
 
                     // Fallback jika data null
                     if (role == null) role = "Customer";
                     if (email == null) email = username != null ? username : "User";
+                    if (name == null) name = email;
 
                     logger.info("👤 User Info:");
+                    logger.info("   ID: {}", userId);
                     logger.info("   Email: {}", email);
                     logger.info("   Username: {}", username);
+                    logger.info("   Name: {}", name);
                     logger.info("   Role: {}", role);
-                    logger.info("   UserId: {}", userId);
 
-                    // Set Spring Security Context (untuk @PreAuthorize)
-                    // Tambahkan prefix "ROLE_" untuk kompatibilitas dengan hasRole()
-                    List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                        new SimpleGrantedAuthority("ROLE_" + role)
-                    );
+                    // Create AuthenticatedUser object (dapat di-inject ke controller)
+                    AuthenticatedUser authenticatedUser = AuthenticatedUser.builder()
+                            .id(userId)
+                            .username(username)
+                            .email(email)
+                            .name(name)
+                            .role(role)
+                            .build();
                     
-                    logger.info("🔑 Granted Authorities: {}", authorities);
+                    logger.info("🔑 Granted Authorities: {}", authenticatedUser.getAuthorities());
                     
-                    // Gunakan email/username sebagai principal
-                    UserDetails userDetails = new User(email, "", authorities);
-                    
+                    // Set AuthenticatedUser sebagai principal di SecurityContext
+                    // AuthenticatedUser implements UserDetails, jadi bisa langsung dipakai
                     UsernamePasswordAuthenticationToken authentication = 
-                            new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+                            new UsernamePasswordAuthenticationToken(
+                                authenticatedUser,  // principal (bisa diakses via @AuthenticationPrincipal)
+                                null,               // credentials (tidak perlu untuk JWT)
+                                authenticatedUser.getAuthorities()  // authorities
+                            );
                     
-                    // Set custom details dengan userId dan role
-                    Map<String, Object> details = new HashMap<>();
-                    details.put("id", userId);
-                    details.put("role", role);
-                    details.put("email", email);
-                    details.put("username", username);
-                    
-                    authentication.setDetails(details);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                     
-                    logger.info("✅ Security context set successfully");
+                    logger.info("✅ Security context set successfully with AuthenticatedUser");
                 }
 
             } catch (Exception e) {

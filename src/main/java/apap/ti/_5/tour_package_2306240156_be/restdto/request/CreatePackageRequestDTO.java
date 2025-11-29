@@ -12,9 +12,6 @@ public class CreatePackageRequestDTO {
     @NotBlank(message = "Package name is required")
     private String packageName;
 
-    @NotBlank(message = "User ID is required")
-    private String userId;
-
     @Positive(message = "Quota must be > 0")
     private int quota;
 

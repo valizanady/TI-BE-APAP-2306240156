@@ -1,0 +1,74 @@
+meta {
+  name: POST Create Complete Package Bundle
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/package/create-bundle
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "packageName": "Paket Liburan Bali 2025",
+    "userId": "user-123",
+    "quota": 10,
+    "startDate": "2025-12-01T08:00:00",
+    "endDate": "2025-12-05T18:00:00",
+    "plans": [
+      {
+        "planName": "Day 1 - Beach Activities",
+        "activityType": "Outdoor",
+        "startDate": "2025-12-01T09:00:00",
+        "endDate": "2025-12-01T17:00:00",
+        "startLocation": "Denpasar",
+        "endLocation": "Kuta Beach",
+        "orderedActivities": [
+          {
+            "activityId": "ACT-001",
+            "orderedQuantity": 5
+          },
+          {
+            "activityId": "ACT-002",
+            "orderedQuantity": 5
+          }
+        ]
+      },
+      {
+        "planName": "Day 2 - Cultural Tour",
+        "activityType": "Cultural",
+        "startDate": "2025-12-02T08:00:00",
+        "endDate": "2025-12-02T16:00:00",
+        "startLocation": "Kuta",
+        "endLocation": "Ubud",
+        "orderedActivities": [
+          {
+            "activityId": "ACT-003",
+            "orderedQuantity": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.status).to.equal(201);
+  });
+  
+  test("Response should have packageId", function() {
+    expect(res.body.data).to.have.property('packageId');
+  });
+  
+  test("Response should have createdPlans array", function() {
+    expect(res.body.data).to.have.property('createdPlans');
+    expect(res.body.data.createdPlans).to.be.an('array');
+  });
+  
+  test("Response should have totalPrice", function() {
+    expect(res.body.data).to.have.property('totalPrice');
+  });
+}

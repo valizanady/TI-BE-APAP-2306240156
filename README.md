@@ -1,4 +1,59 @@
-# Dokumentasi Deployment CI/CD
+# Tour Package Backend API - Complete Documentation
+
+## 🎯 Quick Navigation
+
+### 📚 **NEW: Payment Methods & Transactions Documentation**
+
+#### **🚀 START HERE:**
+1. **[QUICK-START.md](QUICK-START.md)** ⭐⭐⭐ - Ultra-quick overview (5 min read)
+2. **[FRONTEND-IMPLEMENTATION-CHECKLIST.md](FRONTEND-IMPLEMENTATION-CHECKLIST.md)** ⭐⭐ - Step-by-step checklist with checkboxes
+3. **[DOCUMENTATION-INDEX.md](DOCUMENTATION-INDEX.md)** ⭐ - Complete index of all documentation files
+
+#### **For Frontend Developers:**
+1. **[NAVBAR-INTEGRATION.md](NAVBAR-INTEGRATION.md)** ⭐ - Quick guide to add navbar items
+2. **[SUPERADMIN-REQUIREMENTS.md](SUPERADMIN-REQUIREMENTS.md)** - Requirements breakdown with examples
+3. **[Payment Methods Guide](bruno-tests/Payment-Methods/FRONTEND-INTEGRATION-GUIDE.md)** - Complete implementation guide with code examples
+4. **[Transactions Guide](bruno-tests/Top-Up-Transactions/FRONTEND-INTEGRATION-GUIDE.md)** - Complete implementation guide with code examples
+
+#### **For Understanding the System:**
+- **[PAYMENT-METHODS-TRANSACTIONS-README.md](PAYMENT-METHODS-TRANSACTIONS-README.md)** - Complete overview & features
+- **[SYSTEM-ARCHITECTURE.md](SYSTEM-ARCHITECTURE.md)** - System diagrams & architecture
+
+#### **For API Testing:**
+- **[bruno-tests/Payment-Methods/](bruno-tests/Payment-Methods/)** - Payment Methods API tests
+- **[bruno-tests/Top-Up-Transactions/](bruno-tests/Top-Up-Transactions/)** - Transactions API tests
+
+---
+
+## 🚀 Quick Start - Payment Methods & Transactions
+
+### Backend (Already Running)
+```bash
+./gradlew bootRun
+# Server: http://localhost:8080
+```
+
+### Frontend Implementation (3 Steps):
+1. **Read** `NAVBAR-INTEGRATION.md` (5 minutes)
+2. **Add** navbar menu items based on user role
+3. **Create** pages using code examples in FRONTEND-INTEGRATION-GUIDE files
+
+### API Endpoints Summary:
+```
+# Payment Methods (Superadmin)
+GET    /api/payment-methods
+POST   /api/payment-methods
+PUT    /api/payment-methods/{id}/status
+DELETE /api/payment-methods/{id}
+
+# Transactions (Customer + Superadmin)
+GET    /api/transactions
+POST   /api/transactions              (Customer only)
+PUT    /api/transactions/{id}/status  (Superadmin only)
+DELETE /api/transactions/{id}         (Superadmin only)
+```
+
+---
 
 ## 📚 Authentication Documentation
 
@@ -9,6 +64,42 @@
 - 🔥 **[Frontend Auth Flow Guide](../tour-package-2306240156-fe/AUTH-FLOW-SYNC-GUIDE.md)** - Complete 13-step authentication flow with diagrams
 - 🧪 **[Frontend Testing Guide](../tour-package-2306240156-fe/LOGIN-TEST-GUIDE.md)** - Step-by-step manual testing
 - 📝 **[Auth Implementation Summary](./AUTH-IMPLEMENTATION-SUMMARY.md)** - Backend authentication implementation details
+
+---
+
+## 📦 Main Features
+
+### For **Superadmin**:
+- ✅ Manage Payment Methods (Create, Read, Update Status, Delete)
+- ✅ View All Transactions from all customers
+- ✅ Approve/Reject Top-Up Requests (automatic balance update)
+- ✅ Delete Transactions
+
+### For **Customer**:
+- ✅ Create Top-Up Requests (with payment method & proof)
+- ✅ View Own Transactions only
+- ✅ Select from Active Payment Methods
+
+---
+
+## 🔐 Authentication
+
+All API calls require JWT token:
+```javascript
+headers: {
+  'Authorization': `Bearer ${jwt_token}`
+}
+```
+
+Get JWT by exchanging OTT:
+```bash
+POST /api/auth/exchange
+{ "ott": "your-ott-here" }
+```
+
+---
+
+# Dokumentasi Deployment CI/CD
 
 **Key Points:**
 - Backend returns `{ data: { jwt: "..." } }` NOT `{ data: { token: "..." } }`

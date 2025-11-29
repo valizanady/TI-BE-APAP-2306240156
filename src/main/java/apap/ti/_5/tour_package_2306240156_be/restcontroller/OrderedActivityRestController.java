@@ -8,21 +8,22 @@ import apap.ti._5.tour_package_2306240156_be.repository.OrderedQuantityRepositor
 import apap.ti._5.tour_package_2306240156_be.repository.PlanRepository;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.CreateOrderedActivityRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.EligibleActivitiesResponseDTO;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/ordered-activities")
+@RequestMapping("/api/ordered-activities")
 public class OrderedActivityRestController {
 
     private static final Logger logger = LoggerFactory.getLogger(OrderedActivityRestController.class);
@@ -37,13 +38,41 @@ public class OrderedActivityRestController {
     private OrderedQuantityRepository orderedQuantityRepository;
 
     @GetMapping("/eligible")
-    public ResponseEntity<?> getEligibleActivities(@RequestParam("planId") String planId) {
+    public ResponseEntity<?> getEligibleActivities(
+            @RequestParam("planId") String planId,
+            @AuthenticationPrincipal AuthenticatedUser user) {
         try {
-            logger.info("🔍 Fetching eligible activities for planId: {}", planId);
+            logger.info("� GET /eligible - Fetching eligible activities for planId: {}", planId);
+            
+            // ✅ Check if user is authenticated
+            if (user == null) {
+                logger.error("❌ AuthenticatedUser is NULL - SecurityContext not set properly");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Authentication required"));
+            }
+            
+            logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
 
             Plan plan = planRepository.findById(UUID.fromString(planId))
                     .orElseThrow(() -> new RuntimeException("Plan not found with id: " + planId));
-
+            
+            // ✅ Authorization check for Customer
+            if (!user.hasAdminPrivileges()) {
+                // Customer: Check if plan belongs to their package
+                String packageUserId = plan.getTourPackage().getUserId();
+                
+                if (packageUserId == null || !packageUserId.equals(user.getId())) {
+                    logger.warn("❌ Access denied: Customer {} cannot access eligible activities for plan {} from package owned by {}", 
+                                user.getId(), planId, packageUserId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(java.util.Map.of(
+                                "status", 403,
+                                "message", "Access denied: You can only view activities for plans from your own packages"
+                            ));
+                }
+            }
+            
+            logger.info("✅ Authorization passed for user: {}", user.getId());
             logger.info("📋 Plan found: activityType={}, startDate={}, endDate={}, startLocation={}, endLocation={}",
                     plan.getActivityType(), plan.getStartDate(), plan.getEndDate(),
                     plan.getStartLocation(), plan.getEndLocation());
@@ -87,13 +116,38 @@ public class OrderedActivityRestController {
     @PostMapping("/create")
     public ResponseEntity<?> createOrderedActivity(
             @RequestParam("planId") String planId,
-            @RequestBody CreateOrderedActivityRequestDTO request) {
+            @RequestBody CreateOrderedActivityRequestDTO request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
         try {
-            logger.info("🔍 Creating ordered activity for planId: {}, activityId: {}, quantity: {}", 
+            logger.info("🔍 POST /create - Creating ordered activity for planId: {}, activityId: {}, quantity: {}", 
                     planId, request.getActivityId(), request.getOrderedQuantity());
+            
+            if (user == null) {
+                logger.error("❌ AuthenticatedUser is NULL");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Authentication required"));
+            }
+            
+            logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
 
             Plan plan = planRepository.findById(UUID.fromString(planId))
                     .orElseThrow(() -> new RuntimeException("Plan not found with id: " + planId));
+            
+            // ✅ Authorization check for Customer
+            if (!user.hasAdminPrivileges()) {
+                // Customer: Check if plan belongs to their package
+                String packageUserId = plan.getTourPackage().getUserId();
+                
+                if (packageUserId == null || !packageUserId.equals(user.getId())) {
+                    logger.warn("❌ Access denied: Customer {} cannot create ordered activity for plan {} from package owned by {}", 
+                                user.getId(), planId, packageUserId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(java.util.Map.of(
+                                "error", "Access Denied",
+                                "message", "Access denied: You can only create ordered activities for plans from your own packages"
+                            ));
+                }
+            }
 
             // Validasi: Package status harus "Pending"
             if (plan.getTourPackage() == null) {
@@ -324,12 +378,39 @@ public class OrderedActivityRestController {
     @PutMapping("/{orderedActivityId}")
     public ResponseEntity<?> updateOrderedActivity(
             @PathVariable("orderedActivityId") String orderedActivityId,
-            @RequestParam("quantity") Integer newQuantity) {
+            @RequestParam("quantity") Integer newQuantity,
+            @AuthenticationPrincipal AuthenticatedUser user) {
         try {
-            logger.info("🔄 Updating ordered activity: {}, new quantity: {}", orderedActivityId, newQuantity);
+            logger.info("🔄 PUT /{} - Updating ordered activity, new quantity: {}", orderedActivityId, newQuantity);
+            
+            if (user == null) {
+                logger.error("❌ AuthenticatedUser is NULL");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Authentication required"));
+            }
+            
+            logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
 
             OrderedQuantity orderedQuantity = orderedQuantityRepository.findById(UUID.fromString(orderedActivityId))
                     .orElseThrow(() -> new RuntimeException("Ordered activity not found"));
+            
+            Plan plan = orderedQuantity.getPlan();
+            
+            // ✅ Authorization check for Customer
+            if (!user.hasAdminPrivileges()) {
+                // Customer: Check if plan belongs to their package
+                String packageUserId = plan.getTourPackage().getUserId();
+                
+                if (packageUserId == null || !packageUserId.equals(user.getId())) {
+                    logger.warn("❌ Access denied: Customer {} cannot update ordered activity {} from package owned by {}", 
+                                user.getId(), orderedActivityId, packageUserId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(java.util.Map.of(
+                                "error", "Access Denied",
+                                "message", "Access denied: You can only update ordered activities from plans in your own packages"
+                            ));
+                }
+            }
 
             // Validasi: OrderedQuantity belum di-soft delete
             if (Boolean.TRUE.equals(orderedQuantity.getIsDeleted())) {
@@ -340,8 +421,6 @@ public class OrderedActivityRestController {
                             "message", "Cannot update deleted ordered activity"
                         ));
             }
-
-            Plan plan = orderedQuantity.getPlan();
             
             // Validasi: Package status harus "Pending"
             if (plan.getTourPackage() == null) {
@@ -456,14 +535,42 @@ public class OrderedActivityRestController {
     }
 
     @DeleteMapping("/{orderedActivityId}")
-    public ResponseEntity<?> deleteOrderedActivity(@PathVariable("orderedActivityId") String orderedActivityId) {
+    public ResponseEntity<?> deleteOrderedActivity(
+            @PathVariable("orderedActivityId") String orderedActivityId,
+            @AuthenticationPrincipal AuthenticatedUser user) {
         try {
-            logger.info("🗑️ Deleting ordered activity: {}", orderedActivityId);
+            logger.info("🗑️ DELETE /{} - Deleting ordered activity", orderedActivityId);
+            
+            if (user == null) {
+                logger.error("❌ AuthenticatedUser is NULL");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("error", "Authentication required"));
+            }
+            
+            logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
 
             OrderedQuantity orderedQuantity = orderedQuantityRepository.findById(UUID.fromString(orderedActivityId))
                     .orElseThrow(() -> new RuntimeException("Ordered activity not found"));
 
             Plan plan = orderedQuantity.getPlan();
+            
+            // ✅ Authorization check for Customer
+            if (!user.hasAdminPrivileges()) {
+                // Customer: Check if plan belongs to their package
+                String packageUserId = plan.getTourPackage().getUserId();
+                
+                if (packageUserId == null || !packageUserId.equals(user.getId())) {
+                    logger.warn("❌ Access denied: Customer {} cannot delete ordered activity {} from package owned by {}", 
+                                user.getId(), orderedActivityId, packageUserId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(java.util.Map.of(
+                                "error", "Access Denied",
+                                "message", "Access denied: You can only delete ordered activities from plans in your own packages"
+                            ));
+                }
+            }
+            
+            logger.info("✅ Authorization passed for user: {}", user.getId());
             
             // Validasi: Package status harus "Pending"
             if (plan.getTourPackage() == null) {

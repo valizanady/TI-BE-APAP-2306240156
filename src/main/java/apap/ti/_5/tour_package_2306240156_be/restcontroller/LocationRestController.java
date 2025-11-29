@@ -5,7 +5,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.http.ResponseEntity;
 
 @RestController
-@RequestMapping("/location")
+@RequestMapping("/api/location")
 @CrossOrigin(origins = "${CORS_ALLOWED_ORIGINS}")
 public class LocationRestController {
 

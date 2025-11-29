@@ -25,6 +25,10 @@ public class PlanResponseDTO {
     private String endLocation;
     private Long price;
     private String packageId;
+    private String packageName;
+    private String packageStatus;
+    private String packageUserId; // Add userId for frontend RBAC
+    private String creatorRole; // Add creatorRole for tracking
 
     public static PlanResponseDTO fromEntity(Plan plan) {
         // Calculate total price from active (non-deleted) ordered quantities
@@ -36,6 +40,20 @@ public class PlanResponseDTO {
                     .sum();
         }
         
+        // Get package info if available
+        String packageId = null;
+        String packageName = null;
+        String packageStatus = null;
+        String packageUserId = null;
+        String creatorRole = null;
+        
+        if (plan.getTourPackage() != null) {
+            packageId = plan.getTourPackage().getId();
+            packageName = plan.getTourPackage().getPackageName();
+            packageStatus = plan.getTourPackage().getStatus();
+            packageUserId = plan.getTourPackage().getUserId();
+            creatorRole = plan.getTourPackage().getCreatorRole();
+        }
      
         return PlanResponseDTO.builder()
                 .id(plan.getId())
@@ -47,9 +65,11 @@ public class PlanResponseDTO {
                 .startLocation(plan.getStartLocation())
                 .endLocation(plan.getEndLocation())
                 .price(totalPrice) // ✅ Total dari ordered quantities
-                .packageId(
-                    plan.getTourPackage() != null ? plan.getTourPackage().getId() : null
-                )
+                .packageId(packageId)
+                .packageName(packageName)
+                .packageStatus(packageStatus)
+                .packageUserId(packageUserId) // ✅ For frontend RBAC
+                .creatorRole(creatorRole) // ✅ For tracking
                 .build();
     }
 }

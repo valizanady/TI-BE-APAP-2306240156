@@ -17,6 +17,9 @@ public class Activity {
 
     @Id
     private String id;
+    
+    // Vendor/User who created this activity
+    private String vendorId;
 
     private String activityName;
     private String activityItem;

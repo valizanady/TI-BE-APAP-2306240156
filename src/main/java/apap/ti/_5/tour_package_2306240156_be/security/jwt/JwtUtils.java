@@ -90,4 +90,15 @@ public class JwtUtils {
         Map<String, Object> payload = parseTokenPayload(token);
         return payload != null ? (String) payload.get("id") : null;
     }
+
+    /**
+     * Extract name from JWT token
+     * 
+     * @param token JWT token
+     * @return Name string or null
+     */
+    public String getNameFromToken(String token) {
+        Map<String, Object> payload = parseTokenPayload(token);
+        return payload != null ? (String) payload.get("name") : null;
+    }
 }

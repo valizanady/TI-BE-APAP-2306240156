@@ -8,6 +8,7 @@ import java.util.List;
 public class PackageResponseDTO {
   private String id;
   private String userId;
+  private String creatorRole;  // Role of creator (Customer, Superadmin, TourPackageVendor)
   private String packageName;
   private int quota;
   private Long price;

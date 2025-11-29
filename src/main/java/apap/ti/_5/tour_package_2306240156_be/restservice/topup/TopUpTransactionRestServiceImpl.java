@@ -85,10 +85,24 @@ public class TopUpTransactionRestServiceImpl implements TopUpTransactionRestServ
         TopUpTransaction transaction = topUpTransactionRepository.findByIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new NotFoundException("Transaction not found"));
         
+        String currentStatus = transaction.getStatus();
         String newStatus = requestDTO.getStatus();
         
+        System.out.println("   Current status: " + currentStatus + " → New status: " + newStatus);
+        
+        // Prevent duplicate balance addition if transaction is already approved
         if ("Success".equalsIgnoreCase(newStatus)) {
-            // Call Profile Service to add balance using customer username and Superadmin JWT token
+            if ("Success".equalsIgnoreCase(currentStatus)) {
+                System.out.println("⚠️  Transaction already approved. Skipping balance update to prevent duplicate addition.");
+                System.out.println("   Transaction ID: " + id);
+                System.out.println("   Customer: " + transaction.getCustomerUsername());
+                System.out.println("   Amount: " + transaction.getAmount());
+                // Don't add balance again, just return the transaction as-is
+                return transaction;
+            }
+            
+            // Transaction is being approved for the first time - add balance
+            System.out.println("✅ Approving transaction for the first time. Adding balance...");
             boolean success = profileServiceClient.addBalanceToProfile(
                     transaction.getCustomerUsername(),  // Pass username instead of ID
                     transaction.getAmount(),

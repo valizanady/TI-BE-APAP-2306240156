@@ -19,6 +19,11 @@ public class Package {
     private String id;
 
     private String userId;
+    
+    // Role of the user who created this package (Customer, Superadmin, TourPackageVendor)
+    // Used for authorization: Customer can see packages from Admin/Vendor
+    private String creatorRole;
+    
     private String packageName;
     private int quota;
     private Long price;

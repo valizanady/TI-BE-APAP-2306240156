@@ -35,10 +35,6 @@ public class WebSecurityConfig {
                 // Public endpoints (tanpa autentikasi)
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/**").permitAll()  // TODO: Change to authenticated() setelah testing
-                .requestMatchers("/activities/**").permitAll()  // TODO: Change to authenticated()
-                .requestMatchers("/package/**").permitAll()  // TODO: Change to authenticated()
-                .requestMatchers("/plans/**").permitAll()  // TODO: Change to authenticated()
-                .requestMatchers("/ordered-activities/**").permitAll()  // TODO: Change to authenticated()
                 
                 // Semua request lain perlu autentikasi
                 .anyRequest().authenticated()

@@ -44,6 +44,7 @@ public class TourPackageRestServiceImpl implements PackageRestService {
     return PackageResponseDTO.builder()
         .id(p.getId())
         .userId(p.getUserId())
+        .creatorRole(p.getCreatorRole())  // ✅ Include creator role for authorization
         .packageName(p.getPackageName())
         .quota(p.getQuota())
         .price(totalPackagePrice) // ✅ Calculate from plans
@@ -55,6 +56,31 @@ public class TourPackageRestServiceImpl implements PackageRestService {
 
   public List<PackageResponseDTO> getAll() {
       return repo.findAllActive().stream().map(this::map).toList();
+  }
+
+  @Override
+  public List<PackageResponseDTO> getPackagesForCustomer(String userId) {
+      // Customer melihat:
+      // 1. Package milik sendiri (semua status)
+      // 2. Package yang dibuat oleh Superadmin atau TourPackageVendor (berdasarkan creatorRole)
+      return repo.findAllActive().stream()
+          .filter(pkg -> {
+              String pkgUserId = pkg.getUserId();
+              String creatorRole = pkg.getCreatorRole();
+              
+              // Show own package
+              boolean isOwnPackage = pkgUserId != null && pkgUserId.equals(userId);
+              
+              // Show packages created by Admin/Vendor (berdasarkan creatorRole)
+              // If creatorRole is null (old data), assume it's admin/vendor package (backward compatibility)
+              boolean isAdminVendorPackage = creatorRole == null 
+                  || "Superadmin".equals(creatorRole) 
+                  || "TourPackageVendor".equals(creatorRole);
+              
+              return isOwnPackage || isAdminVendorPackage;
+          })
+          .map(this::map)
+          .toList();
   }
 
   @Override
@@ -87,7 +113,8 @@ public class TourPackageRestServiceImpl implements PackageRestService {
   }
 
   @Override
-  public PackageResponseDTO create(CreatePackageRequestDTO req) {
+  @SuppressWarnings("null")
+  public PackageResponseDTO create(CreatePackageRequestDTO req, String userId, String userRole) {
     LocalDateTime now = LocalDateTime.now();
     
     // Validasi: quota harus > 0
@@ -115,7 +142,8 @@ public class TourPackageRestServiceImpl implements PackageRestService {
 
     var entity = Package.builder()
         .id(id)
-        .userId(req.getUserId())
+        .userId(userId)  // ✅ Use userId from JWT token (passed from controller)
+        .creatorRole(userRole)  // ✅ Store creator's role for authorization
         .packageName(req.getPackageName())
         .quota(req.getQuota())
         .price(0L)
