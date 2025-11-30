@@ -42,3 +42,17 @@ spec:
                 secretKeyRef:
                   name: tourpackage-be-secret
                   key: CORS_ALLOWED_ORIGINS
+
+            - name: API_KEY_BILL_SERVICE
+              valueFrom:
+                secretKeyRef:
+                  name: tourpackage-be-secret
+                  key: API_KEY_BILL_SERVICE
+
+            - name: BILL_SERVICE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: tourpackage-be-secret
+                  key: BILL_SERVICE_API_KEY
+
+
