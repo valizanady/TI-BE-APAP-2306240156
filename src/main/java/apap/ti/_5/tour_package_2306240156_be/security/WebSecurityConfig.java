@@ -36,6 +36,9 @@ public class WebSecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (tanpa autentikasi)
+                .requestMatchers("/").permitAll()  // Root endpoint
+                .requestMatchers("/actuator/**").permitAll()  // Health checks
+                .requestMatchers("/error").permitAll()  // Error handling
                 .requestMatchers("/api/auth/**").permitAll()
                 // Payment endpoints - no JWT required, only API Key (handled by ApiKeyFilter)
                 .requestMatchers("/api/package/payment/**").permitAll()

@@ -43,6 +43,15 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         String requestPath = request.getRequestURI();
         logger.info("📍 Request: {} {}", request.getMethod(), requestPath);
 
+        // Skip JWT validation for public endpoints
+        if (requestPath.equals("/") || 
+            requestPath.startsWith("/actuator") ||
+            requestPath.startsWith("/error")) {
+            logger.info("✅ Public endpoint, skipping JWT validation");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String token = parseJwt(request);
 
         if (token != null) {
