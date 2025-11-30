@@ -16,6 +16,11 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import apap.ti._5.tour_package_2306240156_be.security.ApiKeyFilter;
+import apap.ti._5.tour_package_2306240156_be.security.jwt.JwtTokenFilter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,12 +35,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
 
-import apap.ti._5.tour_package_2306240156_be.config.TestConfig;
-import org.springframework.context.annotation.Import;
+import org.springframework.web.client.RestTemplate;
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestConfig.class)
 class PackageRestControllerTest {
 
         @Autowired
@@ -46,6 +49,15 @@ class PackageRestControllerTest {
 
         @MockBean
         private PackageRestService packageRestService;
+
+        @MockBean
+        private JwtTokenFilter jwtTokenFilter;
+
+        @MockBean
+        private ApiKeyFilter apiKeyFilter;
+
+        @MockBean
+        private RestTemplate restTemplate;
 
         private String packageId;
         private Package tourPackage;
@@ -97,6 +109,29 @@ class PackageRestControllerTest {
                                 .startDate(LocalDateTime.of(2024, 7, 1, 8, 0))
                                 .endDate(LocalDateTime.of(2024, 7, 5, 18, 0))
                                 .build();
+
+                // Mock Filters to pass request through
+                try {
+                        doAnswer(invocation -> {
+                                ServletRequest request = invocation.getArgument(0);
+                                ServletResponse response = invocation.getArgument(1);
+                                FilterChain chain = invocation.getArgument(2);
+                                chain.doFilter(request, response);
+                                return null;
+                        }).when(jwtTokenFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class),
+                                        any(FilterChain.class));
+
+                        doAnswer(invocation -> {
+                                ServletRequest request = invocation.getArgument(0);
+                                ServletResponse response = invocation.getArgument(1);
+                                FilterChain chain = invocation.getArgument(2);
+                                chain.doFilter(request, response);
+                                return null;
+                        }).when(apiKeyFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class),
+                                        any(FilterChain.class));
+                } catch (Exception e) {
+                        e.printStackTrace();
+                }
         }
 
         // ==================== GET /package ====================

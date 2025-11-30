@@ -277,10 +277,14 @@ class ActivityRestControllerTest {
         @Test
         void createActivity_asVendor_success() throws Exception {
                 // Arrange
-                CreateActivityRequestDTO request = new CreateActivityRequestDTO(
-                                "New Activity", "New Item", "Flight", 50,
-                                200L, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2),
-                                "Loc A", "Loc B");
+                String startDate = LocalDateTime.now().plusDays(1)
+                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+                String endDate = LocalDateTime.now().plusDays(2)
+                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+                String requestJson = String.format(
+                                "{\"activityName\":\"New Activity\",\"activityItem\":\"New Item\",\"activityType\":\"Flight\",\"capacity\":50,\"price\":200,\"startDate\":\"%s\",\"endDate\":\"%s\",\"startLocation\":\"Loc A\",\"endLocation\":\"Loc B\"}",
+                                startDate, endDate);
+
                 String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
                 String expectedIdPrefix = "ACT-" + dateStr + "-";
 
@@ -296,9 +300,9 @@ class ActivityRestControllerTest {
                                 .with(SecurityMockMvcRequestPostProcessors
                                                 .authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                                .content(requestJson))
                                 .andDo(print())
-                                .andExpect(status().is(999)) // DEBUG: Force failure to see actual status
+                                .andExpect(status().isCreated())
                                 .andExpect(jsonPath("$.data.vendorId").value(VENDOR_ID_FROM_JWT));
         }
 
@@ -320,17 +324,19 @@ class ActivityRestControllerTest {
 
         @Test
         void createActivity_startDateInThePast_badRequest() throws Exception {
-                CreateActivityRequestDTO request = new CreateActivityRequestDTO(
-                                "New Activity", "New Item", "Flight", 50, 200L,
-                                LocalDateTime.now().minusDays(1), // Past (Invalid)
-                                LocalDateTime.now().plusDays(1),
-                                "Loc A", "Loc B");
+                String startDate = LocalDateTime.now().minusDays(1)
+                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+                String endDate = LocalDateTime.now().plusDays(1)
+                                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"));
+                String requestJson = String.format(
+                                "{\"activityName\":\"New Activity\",\"activityItem\":\"New Item\",\"activityType\":\"Flight\",\"capacity\":50,\"price\":200,\"startDate\":\"%s\",\"endDate\":\"%s\",\"startLocation\":\"Loc A\",\"endLocation\":\"Loc B\"}",
+                                startDate, endDate);
 
                 mockMvc.perform(post("/api/activities")
                                 .with(SecurityMockMvcRequestPostProcessors
                                                 .authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(request)))
+                                .content(requestJson))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.message").value("Start date must be in the present or future"));

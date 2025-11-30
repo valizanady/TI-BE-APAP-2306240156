@@ -1,0 +1,76 @@
+> Task :clean
+
+> Task :compileJava
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :processResources
+> Task :classes
+
+> Task :compileTestJava
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/LocationRestControllerTest.java:25: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/PlanRestControllerTest.java:41: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/topup/TopUpTransactionRestControllerTest.java:43: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/topup/TopUpTransactionRestControllerTest.java:46: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/topup/PaymentMethodRestControllerTest.java:38: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/AuthControllerTest.java:30: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/OrderedActivityRestControllerTest.java:38: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/OrderedActivityRestControllerTest.java:41: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/OrderedActivityRestControllerTest.java:44: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+    @MockBean
+     ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/PackageRestControllerTest.java:50: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/PackageRestControllerTest.java:53: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/PackageRestControllerTest.java:56: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/PackageRestControllerTest.java:59: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/ActivityRestControllerTest.java:57: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/ActivityRestControllerTest.java:60: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/ActivityRestControllerTest.java:63: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/StatisticsRestControllerTest.java:44: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/StatisticsRestControllerTest.java:47: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+/Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restcontroller/StatisticsRestControllerTest.java:50: warning: [removal] MockBean in org.springframework.boot.test.mock.mockito has been deprecated and marked for removal
+        @MockBean
+         ^
+Note: /Users/valizanadya/Documents/SMT 5/APAP/tugas individu/tour-package-2306240156-be/src/test/java/apap/ti/_5/tour_package_2306240156_be/restservice/ProfileServiceClientTest.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+19 warnings
+
+> Task :processTestResources
+> Task :testClasses
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
