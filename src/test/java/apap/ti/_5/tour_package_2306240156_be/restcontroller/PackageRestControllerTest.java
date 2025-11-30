@@ -35,10 +35,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
 
-import org.springframework.web.client.RestTemplate;
+import apap.ti._5.tour_package_2306240156_be.config.TestConfig;
+import org.springframework.context.annotation.Import;
+import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(TestConfig.class)
 class PackageRestControllerTest {
 
         @Autowired
@@ -64,6 +72,10 @@ class PackageRestControllerTest {
         private PackageResponseDTO packageResponseDTO;
         private CreatePackageRequestDTO createPackageRequestDTO;
         private UpdatePackageRequestDTO updatePackageRequestDTO;
+
+        private AuthenticatedUser mockCustomerUser;
+        private AuthenticatedUser mockVendorUser;
+        private AuthenticatedUser mockAdminUser;
 
         @BeforeEach
         void setUp() {
@@ -97,6 +109,14 @@ class PackageRestControllerTest {
                 // Setup CreatePackageRequestDTO
                 createPackageRequestDTO = new CreatePackageRequestDTO();
                 createPackageRequestDTO.setPackageName("Bali Adventure Package");
+
+                // Setup Mock Users
+                mockCustomerUser = new AuthenticatedUser("user-123", "customer_user", "customer@example.com",
+                                "Customer Name", "Customer");
+                mockVendorUser = new AuthenticatedUser("vendor-123", "vendor_user", "vendor@example.com", "Vendor Name",
+                                "TourPackageVendor");
+                mockAdminUser = new AuthenticatedUser("admin-123", "admin_user", "admin@example.com", "Admin Name",
+                                "Superadmin");
 
                 createPackageRequestDTO.setQuota(20);
                 createPackageRequestDTO.setStartDate(LocalDateTime.of(2024, 6, 1, 8, 0));
@@ -157,6 +177,7 @@ class PackageRestControllerTest {
                 when(packageRestService.getAll()).thenReturn(packages);
 
                 mockMvc.perform(get("/package")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(200))
@@ -176,6 +197,7 @@ class PackageRestControllerTest {
                 when(packageRestService.getAll()).thenReturn(new ArrayList<>());
 
                 mockMvc.perform(get("/package")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(200))
@@ -192,6 +214,7 @@ class PackageRestControllerTest {
                 when(packageRestService.getById(packageId)).thenReturn(packageResponseDTO);
 
                 mockMvc.perform(get("/package/{id}", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(200))
@@ -212,8 +235,12 @@ class PackageRestControllerTest {
                                 .thenThrow(new RuntimeException("Package not found"));
 
                 mockMvc.perform(get("/package/{id}", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isInternalServerError());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.status").value(404))
+                                .andExpect(jsonPath("$.message").value("Package not found"))
+                                .andExpect(jsonPath("$.data").doesNotExist());
 
                 verify(packageRestService, times(1)).getById(packageId);
         }
@@ -226,6 +253,7 @@ class PackageRestControllerTest {
                                 .thenReturn(packageResponseDTO);
 
                 mockMvc.perform(post("/package/create")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(createPackageRequestDTO)))
                                 .andExpect(status().isCreated())
@@ -250,6 +278,7 @@ class PackageRestControllerTest {
                 invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
 
                 mockMvc.perform(post("/package/create")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
                                 .andExpect(status().isBadRequest())
@@ -258,22 +287,7 @@ class PackageRestControllerTest {
                 verify(packageRestService, never()).create(any(), anyString(), anyString());
         }
 
-        @Test
-        void testCreate_ValidationError_EmptyUserId() throws Exception {
-                CreatePackageRequestDTO invalidRequest = new CreatePackageRequestDTO();
-                invalidRequest.setPackageName("Test Package");
-                invalidRequest.setQuota(20);
-                invalidRequest.setStartDate(LocalDateTime.of(2024, 6, 1, 8, 0));
-                invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
-
-                mockMvc.perform(post("/package/create")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(invalidRequest)))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.status").value(400));
-
-                verify(packageRestService, never()).create(any(), anyString(), anyString());
-        }
+        // Removed testCreate_ValidationError_EmptyUserId as userId is taken from token
 
         @Test
         void testCreate_ValidationError_InvalidQuota() throws Exception {
@@ -285,6 +299,7 @@ class PackageRestControllerTest {
                 invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
 
                 mockMvc.perform(post("/package/create")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
                                 .andExpect(status().isBadRequest())
@@ -302,6 +317,7 @@ class PackageRestControllerTest {
                 invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
 
                 mockMvc.perform(post("/package/create")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
                                 .andExpect(status().isBadRequest())
@@ -319,6 +335,7 @@ class PackageRestControllerTest {
                 invalidRequest.setStartDate(LocalDateTime.of(2024, 6, 1, 8, 0));
 
                 mockMvc.perform(post("/package/create")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
                                 .andExpect(status().isBadRequest())
@@ -333,6 +350,7 @@ class PackageRestControllerTest {
                                 .thenThrow(new RuntimeException("Database error"));
 
                 mockMvc.perform(post("/package/create")
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(createPackageRequestDTO)))
                                 .andExpect(status().isInternalServerError());
@@ -348,6 +366,7 @@ class PackageRestControllerTest {
                 when(packageRestService.deleteById(packageId)).thenReturn(packageResponseDTO);
 
                 mockMvc.perform(delete("/package/{id}/delete", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(200))
@@ -364,6 +383,7 @@ class PackageRestControllerTest {
                                 .thenThrow(new RuntimeException("Package not found"));
 
                 mockMvc.perform(delete("/package/{id}/delete", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.status").value(400))
@@ -379,6 +399,7 @@ class PackageRestControllerTest {
                                 .thenThrow(new RuntimeException("Cannot delete processed package"));
 
                 mockMvc.perform(delete("/package/{id}/delete", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.status").value(400))
@@ -390,13 +411,14 @@ class PackageRestControllerTest {
         @Test
         void testDeletePackage_HasPlans() throws Exception {
                 when(packageRestService.deleteById(packageId))
-                                .thenThrow(new RuntimeException("Cannot delete package with existing plans"));
+                                .thenThrow(new RuntimeException("Package has active plans"));
 
                 mockMvc.perform(delete("/package/{id}/delete", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Cannot delete package with existing plans"));
+                                .andExpect(jsonPath("$.message").value("Package has active plans"));
 
                 verify(packageRestService, times(1)).deleteById(packageId);
         }
@@ -626,5 +648,10 @@ class PackageRestControllerTest {
                                 .andExpect(jsonPath("$.message").value("Cannot process deleted package"));
 
                 verify(packageRestService, times(1)).processPackage(eq(packageId), anyString());
+        }
+
+        private Authentication createAuthentication(AuthenticatedUser user) {
+                SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + user.getRole().toUpperCase());
+                return new UsernamePasswordAuthenticationToken(user, null, List.of(authority));
         }
 }
