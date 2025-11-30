@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - backlog
 
 env:
   DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }}
