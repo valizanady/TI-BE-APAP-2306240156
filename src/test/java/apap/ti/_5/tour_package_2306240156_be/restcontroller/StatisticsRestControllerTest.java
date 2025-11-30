@@ -2,9 +2,7 @@ package apap.ti._5.tour_package_2306240156_be.restcontroller;
 
 import apap.ti._5.tour_package_2306240156_be.restdto.response.StatisticsResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restservice.StatisticsRestService;
-import apap.ti._5.tour_package_2306240156_be.security.ApiKeyFilter;
 import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
-import apap.ti._5.tour_package_2306240156_be.security.jwt.JwtTokenFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,14 +17,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletRequest;
-import jakarta.servlet.ServletResponse;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
@@ -35,533 +28,582 @@ import static org.hamcrest.Matchers.*;
 @AutoConfigureMockMvc
 class StatisticsRestControllerTest {
 
-        @Autowired
-        private MockMvc mockMvc;
+    @Autowired
+    private MockMvc mockMvc;
 
-        @Autowired
-        private ObjectMapper objectMapper;
+    @Autowired
+    private ObjectMapper objectMapper;
 
-        @MockBean
-        private StatisticsRestService statisticsRestService;
+    @MockBean
+    private StatisticsRestService statisticsRestService;
 
-        @MockBean
-        private JwtTokenFilter jwtTokenFilter;
+    private StatisticsResponseDTO monthlyStats;
+    private StatisticsResponseDTO yearlyStats;
 
-        @MockBean
-        private ApiKeyFilter apiKeyFilter;
+    @BeforeEach
+    void setUp() {
+        // Setup Monthly Statistics
+        monthlyStats = new StatisticsResponseDTO();
+        monthlyStats.setPeriod("2024-06");
+        monthlyStats.setTotalRevenue(5000000L);
+        
+        Map<String, Object> monthlyBreakdown = new LinkedHashMap<>();
+        monthlyBreakdown.put("Water Sports", 2000000L);
+        monthlyBreakdown.put("Cultural", 1500000L);
+        monthlyBreakdown.put("Adventure", 1500000L);
+        monthlyStats.setBreakdown(monthlyBreakdown);
 
-        private StatisticsResponseDTO statisticsResponseDTO;
-        private Map<String, Object> revenueByActivityType;
+        // Setup Yearly Statistics
+        yearlyStats = new StatisticsResponseDTO();
+        yearlyStats.setPeriod("2024");
+        yearlyStats.setTotalRevenue(60000000L);
+        
+        Map<String, Object> yearlyBreakdown = new LinkedHashMap<>();
+        for (int i = 1; i <= 12; i++) {
+            Map<String, Object> monthData = new HashMap<>();
+            monthData.put("totalRevenue", 5000000L);
+            monthData.put("Water Sports", 2000000L);
+            monthData.put("Cultural", 1500000L);
+            monthData.put("Adventure", 1500000L);
+            yearlyBreakdown.put(String.valueOf(i), monthData);
+        }
+        yearlyStats.setBreakdown(yearlyBreakdown);
+    }
 
-        @BeforeEach
-        void setUp() {
-                // Setup revenue by activity type
-                revenueByActivityType = new LinkedHashMap<>();
-                revenueByActivityType.put("Flight", 15000000L);
-                revenueByActivityType.put("Accommodation", 10000000L);
-                revenueByActivityType.put("Vehicle Rental", 5000000L);
-                revenueByActivityType.put("Water Sports", 3000000L);
+    // Helper methods for creating authenticated users
+    private AuthenticatedUser createSuperadmin() {
+        return AuthenticatedUser.builder()
+                .id("admin-id")
+                .username("admin")
+                .email("admin@example.com")
+                .name("Admin User")
+                .role("Superadmin")
+                .build();
+    }
 
-                // Setup StatisticsResponseDTO
-                statisticsResponseDTO = StatisticsResponseDTO.builder()
-                                .period("2024")
+    private AuthenticatedUser createVendor() {
+        return AuthenticatedUser.builder()
+                .id("vendor-id")
+                .username("vendor")
+                .email("vendor@example.com")
+                .name("Vendor User")
+                .role("TourPackageVendor")
+                .build();
+    }
 
-                                .breakdown(revenueByActivityType)
-                                .totalRevenue(33000000L)
-                                .build();
+    private AuthenticatedUser createCustomer() {
+        return AuthenticatedUser.builder()
+                .id("customer-id")
+                .username("customer")
+                .email("customer@example.com")
+                .name("Customer User")
+                .role("Customer")
+                .build();
+    }
+
+    // ==================== GET /api/statistics/revenue ====================
+
+    @Test
+    void testGetPotentialRevenue_Success_Superadmin_WithMonth() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenReturn(monthlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2024")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("Statistics retrieved successfully"))
+                .andExpect(jsonPath("$.data.period").value("2024-06"))
+                .andExpect(jsonPath("$.data.totalRevenue").value(5000000))
+                .andExpect(jsonPath("$.data.breakdown['Water Sports']").value(2000000))
+                .andExpect(jsonPath("$.data.breakdown.Cultural").value(1500000));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    @Test
+    void testGetPotentialRevenue_Success_Vendor_WithMonth() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenReturn(monthlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createVendor()))
+                        .param("year", "2024")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    @Test
+    void testGetPotentialRevenue_Success_WithoutMonth() throws Exception {
+        StatisticsResponseDTO yearStats = new StatisticsResponseDTO();
+        yearStats.setPeriod("2024");
+        yearStats.setTotalRevenue(60000000L);
+        yearStats.setBreakdown(new HashMap<>());
+
+        when(statisticsRestService.calculatePotentialRevenue(eq(2024), isNull()))
+                .thenReturn(yearStats);
+
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2024")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.period").value("2024"))
+                .andExpect(jsonPath("$.data.totalRevenue").value(60000000));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(eq(2024), isNull());
+    }
+
+    @Test
+    void testGetPotentialRevenue_AccessDenied_Customer() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createCustomer()))
+                        .param("year", "2024")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value(containsString("Access denied")));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetPotentialRevenue_ValidationError_YearTooLow() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "1999")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetPotentialRevenue_ValidationError_YearTooHigh() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2101")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetPotentialRevenue_ValidationError_MonthTooLow() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2024")
+                        .param("month", "0")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Month must be between 1 and 12"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetPotentialRevenue_ValidationError_MonthTooHigh() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2024")
+                        .param("month", "13")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Month must be between 1 and 12"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetPotentialRevenue_ServiceException() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenThrow(new RuntimeException("Database connection failed"));
+
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2024")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value(containsString("Failed to calculate statistics")));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    @Test
+    void testGetPotentialRevenue_EmptyResult() throws Exception {
+        StatisticsResponseDTO emptyStats = new StatisticsResponseDTO();
+        emptyStats.setPeriod("2024-06");
+        emptyStats.setTotalRevenue(0L);
+        emptyStats.setBreakdown(new HashMap<>());
+
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenReturn(emptyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2024")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalRevenue").value(0))
+                .andExpect(jsonPath("$.data.breakdown").isEmpty());
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    // ==================== GET /api/statistics/revenue/yearly/{year} ====================
+
+    @Test
+    void testGetYearlyRevenue_Success_Superadmin() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(eq(2024), isNull()))
+                .thenReturn(yearlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", 2024)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("Yearly revenue statistics retrieved successfully"))
+                .andExpect(jsonPath("$.data.period").value("2024"))
+                .andExpect(jsonPath("$.data.totalRevenue").value(60000000))
+                .andExpect(jsonPath("$.data.breakdown", aMapWithSize(12)));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(eq(2024), isNull());
+    }
+
+    @Test
+    void testGetYearlyRevenue_Success_Vendor() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(eq(2024), isNull()))
+                .thenReturn(yearlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", 2024)
+                        .with(user(createVendor()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(eq(2024), isNull());
+    }
+
+    @Test
+    void testGetYearlyRevenue_AccessDenied_Customer() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", 2024)
+                        .with(user(createCustomer()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value(containsString("Access denied")));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetYearlyRevenue_ValidationError_YearTooLow() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", 1999)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetYearlyRevenue_ValidationError_YearTooHigh() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", 2101)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), any());
+    }
+
+    @Test
+    void testGetYearlyRevenue_ServiceException() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(eq(2024), isNull()))
+                .thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", 2024)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value(containsString("Failed to calculate yearly statistics")));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(eq(2024), isNull());
+    }
+
+    @Test
+    void testGetYearlyRevenue_EmptyResult() throws Exception {
+        StatisticsResponseDTO emptyStats = new StatisticsResponseDTO();
+        emptyStats.setPeriod("2024");
+        emptyStats.setTotalRevenue(0L);
+        emptyStats.setBreakdown(new HashMap<>());
+
+        when(statisticsRestService.calculatePotentialRevenue(eq(2024), isNull()))
+                .thenReturn(emptyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", 2024)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalRevenue").value(0))
+                .andExpect(jsonPath("$.data.breakdown").isEmpty());
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(eq(2024), isNull());
+    }
+
+    // ==================== GET /api/statistics/revenue/monthly/{year}/{month} ====================
+
+    @Test
+    void testGetMonthlyRevenue_Success_Superadmin() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenReturn(monthlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 6)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("Monthly revenue statistics retrieved successfully"))
+                .andExpect(jsonPath("$.data.period").value("2024-06"))
+                .andExpect(jsonPath("$.data.totalRevenue").value(5000000))
+                .andExpect(jsonPath("$.data.breakdown['Water Sports']").value(2000000));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    @Test
+    void testGetMonthlyRevenue_Success_Vendor() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenReturn(monthlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 6)
+                        .with(user(createVendor()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    @Test
+    void testGetMonthlyRevenue_AccessDenied_Customer() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 6)
+                        .with(user(createCustomer()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.message").value(containsString("Access denied")));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), anyInt());
+    }
+
+    @Test
+    void testGetMonthlyRevenue_ValidationError_YearTooLow() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 1999, 6)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), anyInt());
+    }
+
+    @Test
+    void testGetMonthlyRevenue_ValidationError_YearTooHigh() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2101, 6)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), anyInt());
+    }
+
+    @Test
+    void testGetMonthlyRevenue_ValidationError_MonthTooLow() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 0)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.message").value("Month must be between 1 and 12"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), anyInt());
+    }
+
+    @Test
+    void testGetMonthlyRevenue_ValidationError_MonthTooHigh() throws Exception {
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 13)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Month must be between 1 and 12"));
+
+        verify(statisticsRestService, never()).calculatePotentialRevenue(anyInt(), anyInt());
+    }
+
+    @Test
+    void testGetMonthlyRevenue_ServiceException() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenThrow(new RuntimeException("Database error"));
+
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 6)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.status").value(500))
+                .andExpect(jsonPath("$.message").value(containsString("Failed to calculate monthly statistics")));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    @Test
+    void testGetMonthlyRevenue_EmptyResult() throws Exception {
+        StatisticsResponseDTO emptyStats = new StatisticsResponseDTO();
+        emptyStats.setPeriod("2024-06");
+        emptyStats.setTotalRevenue(0L);
+        emptyStats.setBreakdown(new HashMap<>());
+
+        when(statisticsRestService.calculatePotentialRevenue(2024, 6))
+                .thenReturn(emptyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 6)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalRevenue").value(0))
+                .andExpect(jsonPath("$.data.breakdown").isEmpty());
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+    }
+
+    // ==================== Edge Cases ====================
+
+    @Test
+    void testGetPotentialRevenue_AllMonths() throws Exception {
+        for (int month = 1; month <= 12; month++) {
+            when(statisticsRestService.calculatePotentialRevenue(2024, month))
+                    .thenReturn(monthlyStats);
+
+            mockMvc.perform(get("/api/statistics/revenue")
+                            .with(user(createSuperadmin()))
+                            .param("year", "2024")
+                            .param("month", String.valueOf(month))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk());
         }
 
-        // ==================== GET /statistics?year={year}&month={month}
-        // ====================
+        verify(statisticsRestService, times(12)).calculatePotentialRevenue(eq(2024), anyInt());
+    }
 
-        @Test
-        void testGetPotentialRevenue_Success_WithMonth() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2024, 6))
-                                .thenReturn(statisticsResponseDTO);
+    @Test
+    void testGetYearlyRevenue_MultipleYears() throws Exception {
+        for (int year = 2020; year <= 2024; year++) {
+            StatisticsResponseDTO stats = new StatisticsResponseDTO();
+            stats.setPeriod(String.valueOf(year));
+            stats.setTotalRevenue(60000000L);
+            stats.setBreakdown(new HashMap<>());
 
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(200))
-                                .andExpect(jsonPath("$.message").value("Statistics retrieved successfully"))
-                                .andExpect(jsonPath("$.data.year").value(2024))
-                                .andExpect(jsonPath("$.data.month").value(6))
-                                .andExpect(jsonPath("$.data.totalRevenue").value(33000000))
-                                .andExpect(jsonPath("$.data.breakdown.Flight").value(15000000))
-                                .andExpect(jsonPath("$.data.breakdown.Accommodation").value(10000000))
-                                .andExpect(jsonPath("$.data.breakdown['Vehicle Rental']").value(5000000))
-                                .andExpect(jsonPath("$.data.breakdown['Water Sports']").value(3000000));
+            when(statisticsRestService.calculatePotentialRevenue(eq(year), isNull()))
+                    .thenReturn(stats);
 
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
+            mockMvc.perform(get("/api/statistics/revenue/yearly/{year}", year)
+                            .with(user(createSuperadmin()))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.period").value(String.valueOf(year)));
         }
 
-        @Test
-        void testGetPotentialRevenue_Success_WithoutMonth() throws Exception {
-                StatisticsResponseDTO yearlyStats = StatisticsResponseDTO.builder()
-                                .period("2024")
-
-                                .breakdown(revenueByActivityType)
-                                .totalRevenue(33000000L)
-                                .build();
-
-                when(statisticsRestService.calculatePotentialRevenue(2024, null))
-                                .thenReturn(yearlyStats);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(200))
-                                .andExpect(jsonPath("$.message").value("Statistics retrieved successfully"))
-                                .andExpect(jsonPath("$.data.year").value(2024))
-                                .andExpect(jsonPath("$.data.month").doesNotHaveJsonPath())
-                                .andExpect(jsonPath("$.data.totalRevenue").value(33000000));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, null);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_EmptyRevenue() throws Exception {
-                StatisticsResponseDTO emptyStats = StatisticsResponseDTO.builder()
-                                .period("2024")
-
-                                .breakdown(new HashMap<>())
-                                .totalRevenue(0L)
-                                .build();
-
-                when(statisticsRestService.calculatePotentialRevenue(2024, 12))
-                                .thenReturn(emptyStats);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "12")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.totalRevenue").value(0))
-                                .andExpect(jsonPath("$.data.breakdown").isEmpty());
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 12);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_SingleActivityType() throws Exception {
-                Map<String, Object> singleActivity = new HashMap<>();
-                singleActivity.put("Flight", 20000000L);
-
-                StatisticsResponseDTO singleStats = StatisticsResponseDTO.builder()
-                                .period("2024")
-
-                                .breakdown(singleActivity)
-                                .totalRevenue(20000000L)
-                                .build();
-
-                when(statisticsRestService.calculatePotentialRevenue(2024, 3))
-                                .thenReturn(singleStats);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "3")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.breakdown", aMapWithSize(1)))
-                                .andExpect(jsonPath("$.data.breakdown.Flight").value(20000000))
-                                .andExpect(jsonPath("$.data.totalRevenue").value(20000000));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 3);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_MultipleActivityTypes() throws Exception {
-                Map<String, Object> multipleActivities = new LinkedHashMap<>();
-                multipleActivities.put("Flight", 15000000L);
-                multipleActivities.put("Accommodation", 10000000L);
-                multipleActivities.put("Vehicle Rental", 5000000L);
-                multipleActivities.put("Water Sports", 3000000L);
-                multipleActivities.put("Cultural Tour", 2000000L);
-                multipleActivities.put("Food & Beverage", 1500000L);
-
-                StatisticsResponseDTO multiStats = StatisticsResponseDTO.builder()
-                                .period("2024")
-
-                                .breakdown(multipleActivities)
-                                .totalRevenue(36500000L)
-                                .build();
-
-                when(statisticsRestService.calculatePotentialRevenue(2024, 7))
-                                .thenReturn(multiStats);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "7")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.breakdown", aMapWithSize(6)))
-                                .andExpect(jsonPath("$.data.totalRevenue").value(36500000));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 7);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_January() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2024, 1))
-                                .thenReturn(statisticsResponseDTO);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "1")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(200));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 1);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_December() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2024, 12))
-                                .thenReturn(statisticsResponseDTO);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "12")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(200));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 12);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_Year2000() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2000, 6))
-                                .thenReturn(statisticsResponseDTO);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2000")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(200));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2000, 6);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_Year2100() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2100, 6))
-                                .thenReturn(statisticsResponseDTO);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2100")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value(200));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2100, 6);
-        }
-
-        // ==================== Validation Error Tests ====================
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_MissingYear() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest());
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_YearTooLow() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "1999")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"))
-                                .andExpect(jsonPath("$.data").doesNotExist());
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_YearTooHigh() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2101")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_MonthTooLow() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "0")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Month must be between 1 and 12"));
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_MonthTooHigh() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "13")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Month must be between 1 and 12"));
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_NegativeMonth() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "-1")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Month must be between 1 and 12"));
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_NegativeYear() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "-2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_YearZero() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "0")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.message").value("Year must be between 2000 and 2100"));
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_InvalidYearFormat() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "abc")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest());
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ValidationError_InvalidMonthFormat() throws Exception {
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "xyz")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isBadRequest());
-
-                verifyNoInteractions(statisticsRestService);
-        }
-
-        // ==================== Service Exception Tests ====================
-
-        @Test
-        void testGetPotentialRevenue_ServiceException() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2024, 6))
-                                .thenThrow(new RuntimeException("Database connection failed"));
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isInternalServerError())
-                                .andExpect(jsonPath("$.status").value(500))
-                                .andExpect(jsonPath("$.message")
-                                                .value("Failed to calculate statistics: Database connection failed"))
-                                .andExpect(jsonPath("$.data").doesNotExist());
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ServiceException_NoData() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2024, 6))
-                                .thenThrow(new RuntimeException("No packages found for given period"));
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isInternalServerError())
-                                .andExpect(jsonPath("$.status").value(500))
-                                .andExpect(jsonPath("$.message").value(
-                                                "Failed to calculate statistics: No packages found for given period"));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ServiceException_NullPointer() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2024, null))
-                                .thenThrow(new NullPointerException("Unexpected null value"));
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isInternalServerError())
-                                .andExpect(jsonPath("$.status").value(500))
-                                .andExpect(jsonPath("$.message")
-                                                .value("Failed to calculate statistics: Unexpected null value"));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, null);
-        }
-
-        @Test
-        void testGetPotentialRevenue_ServiceException_IllegalArgument() throws Exception {
-                when(statisticsRestService.calculatePotentialRevenue(2024, 6))
-                                .thenThrow(new IllegalArgumentException("Invalid calculation parameters"));
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isInternalServerError())
-                                .andExpect(jsonPath("$.status").value(500))
-                                .andExpect(jsonPath("$.message").value(
-                                                "Failed to calculate statistics: Invalid calculation parameters"));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
-        }
-
-        // ==================== Edge Cases ====================
-
-        @Test
-        void testGetPotentialRevenue_EdgeCase_VeryLargeRevenue() throws Exception {
-                Map<String, Object> largeRevenue = new HashMap<>();
-                largeRevenue.put("Flight", 999999999999L);
-                largeRevenue.put("Accommodation", 888888888888L);
-
-                StatisticsResponseDTO largeStats = StatisticsResponseDTO.builder()
-                                .period("2024")
-
-                                .breakdown(largeRevenue)
-                                .totalRevenue(1888888888887L)
-                                .build();
-
-                when(statisticsRestService.calculatePotentialRevenue(2024, 6))
-                                .thenReturn(largeStats);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.totalRevenue").value(1888888888887L));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
-        }
-
-        @Test
-        void testGetPotentialRevenue_EdgeCase_ActivityTypeWithSpecialCharacters() throws Exception {
-                Map<String, Object> specialChars = new HashMap<>();
-                specialChars.put("Food & Beverage", 1000000L);
-                specialChars.put("Spa & Wellness", 2000000L);
-                specialChars.put("City Tour (Day)", 1500000L);
-
-                StatisticsResponseDTO specialStats = StatisticsResponseDTO.builder()
-                                .period("2024")
-
-                                .breakdown(specialChars)
-                                .totalRevenue(4500000L)
-                                .build();
-
-                when(statisticsRestService.calculatePotentialRevenue(2024, 6))
-                                .thenReturn(specialStats);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.breakdown['Food & Beverage']").value(1000000))
-                                .andExpect(jsonPath("$.data.breakdown['Spa & Wellness']").value(2000000))
-                                .andExpect(jsonPath("$.data.breakdown['City Tour (Day)']").value(1500000));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
-        }
-
-        @Test
-        void testGetPotentialRevenue_EdgeCase_ZeroRevenue() throws Exception {
-                Map<String, Object> zeroRevenue = new HashMap<>();
-                zeroRevenue.put("Flight", 0L);
-                zeroRevenue.put("Accommodation", 0L);
-
-                StatisticsResponseDTO zeroStats = StatisticsResponseDTO.builder()
-                                .period("2024")
-
-                                .breakdown(zeroRevenue)
-                                .totalRevenue(0L)
-                                .build();
-
-                when(statisticsRestService.calculatePotentialRevenue(2024, 6))
-                                .thenReturn(zeroStats);
-
-                mockMvc.perform(get("/statistics")
-                                .param("year", "2024")
-                                .param("month", "6")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.data.totalRevenue").value(0));
-
-                verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 6);
-        }
-
-        @Test
-        void testGetPotentialRevenue_Success_AllMonthsOfYear() throws Exception {
-                for (int month = 1; month <= 12; month++) {
-                        StatisticsResponseDTO monthStats = StatisticsResponseDTO.builder()
-                                        .period("2024")
-
-                                        .breakdown(revenueByActivityType)
-                                        .totalRevenue(33000000L)
-                                        .build();
-
-                        when(statisticsRestService.calculatePotentialRevenue(2024, month))
-                                        .thenReturn(monthStats);
-
-                        mockMvc.perform(get("/statistics")
-                                        .param("year", "2024")
-                                        .param("month", String.valueOf(month))
-                                        .contentType(MediaType.APPLICATION_JSON))
-                                        .andExpect(status().isOk())
-                                        .andExpect(jsonPath("$.status").value(200));
-                }
-
-                verify(statisticsRestService, times(12)).calculatePotentialRevenue(eq(2024), any());
-        }
+        verify(statisticsRestService, times(5)).calculatePotentialRevenue(anyInt(), isNull());
+    }
+
+    @Test
+    void testGetPotentialRevenue_BoundaryYear2000() throws Exception {
+        StatisticsResponseDTO stats = new StatisticsResponseDTO();
+        stats.setPeriod("2000-06");
+        stats.setTotalRevenue(1000000L);
+        stats.setBreakdown(new HashMap<>());
+
+        when(statisticsRestService.calculatePotentialRevenue(2000, 6))
+                .thenReturn(stats);
+
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2000")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.period").value("2000-06"));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2000, 6);
+    }
+
+    @Test
+    void testGetPotentialRevenue_BoundaryYear2100() throws Exception {
+        StatisticsResponseDTO stats = new StatisticsResponseDTO();
+        stats.setPeriod("2100-06");
+        stats.setTotalRevenue(1000000L);
+        stats.setBreakdown(new HashMap<>());
+
+        when(statisticsRestService.calculatePotentialRevenue(2100, 6))
+                .thenReturn(stats);
+
+        mockMvc.perform(get("/api/statistics/revenue")
+                        .with(user(createSuperadmin()))
+                        .param("year", "2100")
+                        .param("month", "6")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.period").value("2100-06"));
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2100, 6);
+    }
+
+    @Test
+    void testGetMonthlyRevenue_BoundaryMonth1() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 1))
+                .thenReturn(monthlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 1)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 1);
+    }
+
+    @Test
+    void testGetMonthlyRevenue_BoundaryMonth12() throws Exception {
+        when(statisticsRestService.calculatePotentialRevenue(2024, 12))
+                .thenReturn(monthlyStats);
+
+        mockMvc.perform(get("/api/statistics/revenue/monthly/{year}/{month}", 2024, 12)
+                        .with(user(createSuperadmin()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        verify(statisticsRestService, times(1)).calculatePotentialRevenue(2024, 12);
+    }
 }

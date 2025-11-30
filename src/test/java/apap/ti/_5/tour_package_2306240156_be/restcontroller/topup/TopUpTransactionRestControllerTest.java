@@ -1,61 +1,85 @@
 package apap.ti._5.tour_package_2306240156_be.restcontroller.topup;
 
+import apap.ti._5.tour_package_2306240156_be.model.PaymentMethod;
 import apap.ti._5.tour_package_2306240156_be.model.TopUpTransaction;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.topup.CreateTopUpTransactionRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.topup.UpdateTopUpStatusRequestDTO;
+import apap.ti._5.tour_package_2306240156_be.restdto.response.BaseResponseDTO;
+import apap.ti._5.tour_package_2306240156_be.restdto.response.topup.TopUpTransactionResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restservice.topup.TopUpTransactionRestService;
 import apap.ti._5.tour_package_2306240156_be.security.jwt.JwtUtils;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.validation.BindingResult;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.*;
 
-@WebMvcTest(TopUpTransactionRestController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@ExtendWith(MockitoExtension.class)
 class TopUpTransactionRestControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @MockBean
+    @Mock
     private TopUpTransactionRestService topUpTransactionRestService;
 
-    @MockBean
+    @Mock
     private JwtUtils jwtUtils;
 
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private BindingResult bindingResult;
+
+    @Mock
+    private SecurityContext securityContext;
+
+    @Mock
+    private Authentication authentication;
+
+    @InjectMocks
+    private TopUpTransactionRestController controller;
+
     private TopUpTransaction mockTransaction;
-    private final UUID TRANSACTION_ID = UUID.randomUUID();
-    private final UUID CUSTOMER_ID = UUID.randomUUID();
+    private UUID transactionId;
+    private UUID customerId;
+    private UUID paymentMethodId;
+    private String customerUsername = "testuser";
 
     @BeforeEach
     void setUp() {
+        transactionId = UUID.randomUUID();
+        customerId = UUID.randomUUID();
+        paymentMethodId = UUID.randomUUID();
+
+        PaymentMethod mockPaymentMethod = new PaymentMethod();
+        mockPaymentMethod.setId(paymentMethodId);
+        mockPaymentMethod.setMethodName("Bank Transfer");
+
         mockTransaction = new TopUpTransaction();
-        mockTransaction.setId(TRANSACTION_ID);
+        mockTransaction.setId(transactionId);
+        mockTransaction.setCustomerId(customerId);
+        mockTransaction.setCustomerUsername(customerUsername);
         mockTransaction.setAmount(100000L);
+        mockTransaction.setPaymentMethod(mockPaymentMethod);
         mockTransaction.setStatus("Pending");
+        mockTransaction.setCreatedAt(LocalDateTime.now());
+
+        SecurityContextHolder.setContext(securityContext);
     }
 
     private void setupSecurityContext(String role, UUID userId, String username) {
@@ -63,109 +87,200 @@ class TopUpTransactionRestControllerTest {
         details.put("role", role);
         details.put("id", userId.toString());
         details.put("username", username);
-
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                username, null, Collections.emptyList());
-        authentication.setDetails(details);
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        when(authentication.getDetails()).thenReturn(details);
     }
 
     @Test
-    void getAllTransactions_asSuperadmin_success() throws Exception {
-        setupSecurityContext("Superadmin", UUID.randomUUID(), "admin");
-        when(topUpTransactionRestService.getAllTransactions("Superadmin", null)).thenReturn(List.of(mockTransaction));
-
-        mockMvc.perform(get("/api/transactions"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].id").value(TRANSACTION_ID.toString()));
-    }
-
-    @Test
-    void getAllTransactions_asCustomer_success() throws Exception {
-        setupSecurityContext("Customer", CUSTOMER_ID, "customer");
-        when(topUpTransactionRestService.getAllTransactions(eq("Customer"), eq(CUSTOMER_ID)))
+    void getAllTransactions_asCustomer_success() {
+        setupSecurityContext("Customer", customerId, customerUsername);
+        when(topUpTransactionRestService.getAllTransactions("Customer", customerId))
                 .thenReturn(List.of(mockTransaction));
 
-        mockMvc.perform(get("/api/transactions"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].id").value(TRANSACTION_ID.toString()));
+        ResponseEntity<BaseResponseDTO<List<TopUpTransactionResponseDTO>>> response = 
+                controller.getAllTransactions(request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(1, response.getBody().getData().size());
     }
 
     @Test
-    void getTransactionById_asSuperadmin_success() throws Exception {
-        setupSecurityContext("Superadmin", UUID.randomUUID(), "admin");
-        when(topUpTransactionRestService.getTransactionById(TRANSACTION_ID)).thenReturn(mockTransaction);
+    void getAllTransactions_asSuperadmin_success() {
+        UUID adminId = UUID.randomUUID();
+        setupSecurityContext("Superadmin", adminId, "admin");
+        when(topUpTransactionRestService.getAllTransactions("Superadmin", adminId))
+                .thenReturn(List.of(mockTransaction));
 
-        mockMvc.perform(get("/api/transactions/{id}", TRANSACTION_ID))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(TRANSACTION_ID.toString()));
+        ResponseEntity<BaseResponseDTO<List<TopUpTransactionResponseDTO>>> response = 
+                controller.getAllTransactions(request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
-    void getTransactionById_asCustomer_forbidden() throws Exception {
-        setupSecurityContext("Customer", CUSTOMER_ID, "customer");
+    void getAllTransactions_emptyList() {
+        setupSecurityContext("Customer", customerId, customerUsername);
+        when(topUpTransactionRestService.getAllTransactions("Customer", customerId))
+                .thenReturn(new ArrayList<>());
 
-        mockMvc.perform(get("/api/transactions/{id}", TRANSACTION_ID))
-                .andExpect(status().isForbidden());
+        ResponseEntity<BaseResponseDTO<List<TopUpTransactionResponseDTO>>> response = 
+                controller.getAllTransactions(request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertTrue(response.getBody().getData().isEmpty());
     }
 
     @Test
-    void createTransaction_success() throws Exception {
-        setupSecurityContext("Customer", CUSTOMER_ID, "customer");
-        CreateTopUpTransactionRequestDTO request = new CreateTopUpTransactionRequestDTO();
-        request.setAmount(100000L);
-        request.setPaymentMethodId(UUID.randomUUID());
-        request.setCustomerId(CUSTOMER_ID);
+    void getAllTransactions_serviceThrowsException() {
+        setupSecurityContext("Customer", customerId, customerUsername);
+        when(topUpTransactionRestService.getAllTransactions("Customer", customerId))
+                .thenThrow(new RuntimeException("Database error"));
 
-        when(topUpTransactionRestService.createTransaction(any(CreateTopUpTransactionRequestDTO.class), eq("customer")))
+        ResponseEntity<BaseResponseDTO<List<TopUpTransactionResponseDTO>>> response = 
+                controller.getAllTransactions(request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+    }
+
+    @Test
+    void getTransactionById_asSuperadmin_success() {
+        UUID adminId = UUID.randomUUID();
+        setupSecurityContext("Superadmin", adminId, "admin");
+        when(topUpTransactionRestService.getTransactionById(transactionId)).thenReturn(mockTransaction);
+
+        ResponseEntity<BaseResponseDTO<TopUpTransactionResponseDTO>> response = 
+                controller.getTransactionById(transactionId, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void getTransactionById_asCustomer_forbidden() {
+        setupSecurityContext("Customer", customerId, customerUsername);
+
+        ResponseEntity<BaseResponseDTO<TopUpTransactionResponseDTO>> response = 
+                controller.getTransactionById(transactionId, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+
+    @Test
+    void createTransaction_asCustomer_success() {
+        CreateTopUpTransactionRequestDTO requestDTO = new CreateTopUpTransactionRequestDTO();
+        requestDTO.setCustomerId(customerId);
+        requestDTO.setPaymentMethodId(paymentMethodId);
+        requestDTO.setAmount(100000L);
+
+        setupSecurityContext("Customer", customerId, customerUsername);
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(topUpTransactionRestService.createTransaction(eq(requestDTO), eq(customerUsername)))
                 .thenReturn(mockTransaction);
 
-        mockMvc.perform(post("/api/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.id").value(TRANSACTION_ID.toString()));
+        ResponseEntity<BaseResponseDTO<TopUpTransactionResponseDTO>> response = 
+                controller.createTransaction(requestDTO, bindingResult, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
 
     @Test
-    void createTransaction_forOtherUser_forbidden() throws Exception {
-        setupSecurityContext("Customer", CUSTOMER_ID, "customer");
-        CreateTopUpTransactionRequestDTO request = new CreateTopUpTransactionRequestDTO();
-        request.setAmount(100000L);
-        request.setPaymentMethodId(UUID.randomUUID());
-        request.setCustomerId(UUID.randomUUID()); // Different ID
+    void createTransaction_validationError() {
+        CreateTopUpTransactionRequestDTO requestDTO = new CreateTopUpTransactionRequestDTO();
+        requestDTO.setAmount(-100L);
 
-        mockMvc.perform(post("/api/transactions")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isForbidden());
+        when(bindingResult.hasErrors()).thenReturn(true);
+        when(bindingResult.getAllErrors()).thenReturn(
+                List.of(new org.springframework.validation.FieldError("requestDTO", "amount", "Amount must be positive"))
+        );
+
+        ResponseEntity<BaseResponseDTO<TopUpTransactionResponseDTO>> response = 
+                controller.createTransaction(requestDTO, bindingResult, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
     @Test
-    void updateTransactionStatus_asSuperadmin_success() throws Exception {
-        setupSecurityContext("Superadmin", UUID.randomUUID(), "admin");
-        UpdateTopUpStatusRequestDTO request = new UpdateTopUpStatusRequestDTO();
-        request.setStatus("Success");
+    void createTransaction_wrongCustomerId_forbidden() {
+        UUID otherCustomerId = UUID.randomUUID();
+        CreateTopUpTransactionRequestDTO requestDTO = new CreateTopUpTransactionRequestDTO();
+        requestDTO.setCustomerId(otherCustomerId);
+        requestDTO.setAmount(100000L);
 
-        mockTransaction.setStatus("Success");
-        when(topUpTransactionRestService.updateTransactionStatus(eq(TRANSACTION_ID),
-                any(UpdateTopUpStatusRequestDTO.class), any()))
-                .thenReturn(mockTransaction);
+        setupSecurityContext("Customer", customerId, customerUsername);
+        when(bindingResult.hasErrors()).thenReturn(false);
 
-        mockMvc.perform(put("/api/transactions/{id}/status", TRANSACTION_ID)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("Success"));
+        ResponseEntity<BaseResponseDTO<TopUpTransactionResponseDTO>> response = 
+                controller.createTransaction(requestDTO, bindingResult, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 
     @Test
-    void deleteTransaction_asSuperadmin_success() throws Exception {
-        setupSecurityContext("Superadmin", UUID.randomUUID(), "admin");
+    void updateTransactionStatus_asSuperadmin_success() {
+        UUID adminId = UUID.randomUUID();
+        UpdateTopUpStatusRequestDTO requestDTO = new UpdateTopUpStatusRequestDTO();
+        requestDTO.setStatus("Approved");
 
-        mockMvc.perform(delete("/api/transactions/{id}", TRANSACTION_ID))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Transaction deleted successfully"));
+        TopUpTransaction updatedTransaction = new TopUpTransaction();
+        updatedTransaction.setId(transactionId);
+        updatedTransaction.setStatus("Approved");
+
+        setupSecurityContext("Superadmin", adminId, "admin");
+        when(request.getHeader("Authorization")).thenReturn("Bearer test-token");
+        when(bindingResult.hasErrors()).thenReturn(false);
+        when(topUpTransactionRestService.updateTransactionStatus(eq(transactionId), eq(requestDTO), eq("test-token")))
+                .thenReturn(updatedTransaction);
+
+        ResponseEntity<BaseResponseDTO<TopUpTransactionResponseDTO>> response = 
+                controller.updateTransactionStatus(transactionId, requestDTO, bindingResult, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void updateTransactionStatus_asCustomer_forbidden() {
+        UpdateTopUpStatusRequestDTO requestDTO = new UpdateTopUpStatusRequestDTO();
+        requestDTO.setStatus("Approved");
+
+        setupSecurityContext("Customer", customerId, customerUsername);
+
+        ResponseEntity<BaseResponseDTO<TopUpTransactionResponseDTO>> response = 
+                controller.updateTransactionStatus(transactionId, requestDTO, bindingResult, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+    }
+
+    @Test
+    void deleteTransaction_asSuperadmin_success() {
+        UUID adminId = UUID.randomUUID();
+        setupSecurityContext("Superadmin", adminId, "admin");
+        doNothing().when(topUpTransactionRestService).deleteTransaction(transactionId);
+
+        ResponseEntity<BaseResponseDTO<String>> response = 
+                controller.deleteTransaction(transactionId, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+    }
+
+    @Test
+    void deleteTransaction_asCustomer_forbidden() {
+        setupSecurityContext("Customer", customerId, customerUsername);
+
+        ResponseEntity<BaseResponseDTO<String>> response = 
+                controller.deleteTransaction(transactionId, request);
+
+        assertNotNull(response);
+        assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
     }
 }

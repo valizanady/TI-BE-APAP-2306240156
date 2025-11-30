@@ -107,7 +107,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.createPlan("PKG999", createRequest);
         });
-        
+
         assertEquals("Package not found", exception.getMessage());
         verify(packageRepository).findById("PKG999");
         verify(planRepository, never()).save(any());
@@ -121,7 +121,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.createPlan("PKG001", createRequest);
         });
-        
+
         assertEquals("Cannot create plan. Package status must be 'Pending'", exception.getMessage());
         verify(packageRepository).findById("PKG001");
         verify(planRepository, never()).save(any());
@@ -131,28 +131,27 @@ class PlanRestServiceImplTest {
     void testCreatePlan_EndDateBeforeStartDate() {
         createRequest.setStartDate(LocalDateTime.of(2025, 11, 5, 10, 0));
         createRequest.setEndDate(LocalDateTime.of(2025, 11, 5, 8, 0));
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.createPlan("PKG001", createRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("End date/time"));
-        assertTrue(exception.getMessage().contains("cannot be before start date/time"));
+
+        assertEquals("End date must be after start date", exception.getMessage());
         verify(planRepository, never()).save(any());
     }
 
     @Test
     void testCreatePlan_StartDateBeforePackageStartDate() {
         createRequest.setStartDate(LocalDateTime.of(2025, 10, 31, 23, 59));
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.createPlan("PKG001", createRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan start date/time"));
         assertTrue(exception.getMessage().contains("must be on or after package start date/time"));
         verify(planRepository, never()).save(any());
@@ -161,13 +160,13 @@ class PlanRestServiceImplTest {
     @Test
     void testCreatePlan_EndDateAfterPackageEndDate() {
         createRequest.setEndDate(LocalDateTime.of(2025, 11, 7, 0, 1));
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.createPlan("PKG001", createRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan end date/time"));
         assertTrue(exception.getMessage().contains("must be on or before package end date/time"));
         verify(planRepository, never()).save(any());
@@ -178,13 +177,13 @@ class PlanRestServiceImplTest {
         createRequest.setActivityType("Accommodation");
         createRequest.setStartLocation("Jakarta");
         createRequest.setEndLocation("Bali");
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.createPlan("PKG001", createRequest);
         });
-        
+
         assertEquals("For Accommodation, start and end location must be the same", exception.getMessage());
         verify(planRepository, never()).save(any());
     }
@@ -194,7 +193,7 @@ class PlanRestServiceImplTest {
         createRequest.setActivityType("Accommodation");
         createRequest.setStartLocation("Jakarta");
         createRequest.setEndLocation("Jakarta");
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
@@ -207,7 +206,7 @@ class PlanRestServiceImplTest {
     @Test
     void testCreatePlan_StartDateEqualsPackageStartDate() {
         createRequest.setStartDate(LocalDateTime.of(2025, 11, 1, 0, 0));
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
@@ -220,7 +219,7 @@ class PlanRestServiceImplTest {
     @Test
     void testCreatePlan_EndDateEqualsPackageEndDate() {
         createRequest.setEndDate(LocalDateTime.of(2025, 11, 7, 0, 0));
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
@@ -252,7 +251,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.getPlanById(nonExistentId);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan not found with id:"));
         verify(planRepository).findById(nonExistentId);
     }
@@ -265,7 +264,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.getPlanById(testPlanId);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan not found with id:"));
     }
 
@@ -312,7 +311,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(nonExistentId, updateRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan not found with id:"));
     }
 
@@ -324,7 +323,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
+
         assertEquals("Package not found for this plan", exception.getMessage());
     }
 
@@ -336,7 +335,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("Cannot update plan. Package status must be 'Pending'"));
     }
 
@@ -345,13 +344,13 @@ class PlanRestServiceImplTest {
         OrderedQuantity oq = new OrderedQuantity();
         oq.setIsDeleted(false);
         testPlan.setOrderedQuantities(List.of(oq));
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("Cannot update plan. Plan has"));
         assertTrue(exception.getMessage().contains("active ordered activities"));
     }
@@ -361,7 +360,7 @@ class PlanRestServiceImplTest {
         OrderedQuantity oq = new OrderedQuantity();
         oq.setIsDeleted(true);
         testPlan.setOrderedQuantities(List.of(oq));
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
@@ -374,7 +373,7 @@ class PlanRestServiceImplTest {
     @Test
     void testUpdatePlan_OrderedQuantitiesNull() {
         testPlan.setOrderedQuantities(null);
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
@@ -388,27 +387,26 @@ class PlanRestServiceImplTest {
     void testUpdatePlan_EndDateBeforeStartDate() {
         updateRequest.setStartDate(LocalDateTime.of(2025, 11, 5, 10, 0));
         updateRequest.setEndDate(LocalDateTime.of(2025, 11, 5, 8, 0));
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
-        assertTrue(exception.getMessage().contains("End date/time"));
-        assertTrue(exception.getMessage().contains("cannot be before start date/time"));
+
+        assertEquals("End date must be after start date", exception.getMessage());
     }
 
     @Test
     void testUpdatePlan_StartDateBeforePackageStartDate() {
         updateRequest.setStartDate(LocalDateTime.of(2025, 10, 31, 23, 59));
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan start date/time"));
         assertTrue(exception.getMessage().contains("must be on or after package start date/time"));
     }
@@ -416,13 +414,13 @@ class PlanRestServiceImplTest {
     @Test
     void testUpdatePlan_EndDateAfterPackageEndDate() {
         updateRequest.setEndDate(LocalDateTime.of(2025, 11, 7, 0, 1));
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan end date/time"));
         assertTrue(exception.getMessage().contains("must be on or before package end date/time"));
     }
@@ -432,14 +430,15 @@ class PlanRestServiceImplTest {
         testPlan.setActivityType("Accommodation");
         updateRequest.setStartLocation("Jakarta");
         updateRequest.setEndLocation("Bali");
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
-        assertEquals("For Accommodation activity type, start and end location must be the same", exception.getMessage());
+
+        assertEquals("For Accommodation activity type, start and end location must be the same",
+                exception.getMessage());
     }
 
     @Test
@@ -447,7 +446,7 @@ class PlanRestServiceImplTest {
         testPlan.setActivityType("Accommodation");
         updateRequest.setStartLocation("Jakarta");
         updateRequest.setEndLocation("Jakarta");
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
@@ -462,7 +461,7 @@ class PlanRestServiceImplTest {
         testPlan.setActivityType("Flight");
         updateRequest.setStartLocation("Jakarta");
         updateRequest.setEndLocation("Bali");
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
@@ -479,13 +478,13 @@ class PlanRestServiceImplTest {
         OrderedQuantity oq2 = new OrderedQuantity();
         oq2.setIsDeleted(false);
         testPlan.setOrderedQuantities(List.of(oq1, oq2));
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("2 active ordered activities"));
     }
 
@@ -496,13 +495,13 @@ class PlanRestServiceImplTest {
         OrderedQuantity oq2 = new OrderedQuantity();
         oq2.setIsDeleted(true);
         testPlan.setOrderedQuantities(List.of(oq1, oq2));
-        
+
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.updatePlan(testPlanId, updateRequest);
         });
-        
+
         assertTrue(exception.getMessage().contains("1 active ordered activities"));
     }
 
@@ -528,7 +527,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.deletePlan(nonExistentId);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan not found with id:"));
     }
 
@@ -540,7 +539,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.deletePlan(testPlanId);
         });
-        
+
         assertEquals("Plan is already deleted", exception.getMessage());
         verify(planRepository, never()).save(any());
     }
@@ -553,7 +552,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.deletePlan(testPlanId);
         });
-        
+
         assertEquals("Package not found for this plan", exception.getMessage());
     }
 
@@ -565,7 +564,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.deletePlan(testPlanId);
         });
-        
+
         assertTrue(exception.getMessage().contains("Cannot delete plan. Package status must be 'Pending'"));
     }
 
@@ -577,7 +576,7 @@ class PlanRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             planRestService.deletePlan(testPlanId);
         });
-        
+
         assertTrue(exception.getMessage().contains("Cannot delete plan. Package status must be 'Pending'"));
     }
 

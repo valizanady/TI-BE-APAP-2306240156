@@ -72,7 +72,10 @@ public class WebSecurityConfig {
         
         // Parse origins dari environment variable (comma-separated)
         String[] origins = corsAllowedOrigins.split(",");
-        configuration.setAllowedOrigins(Arrays.asList(origins));
+        
+        // Use allowedOriginPatterns instead of allowedOrigins to support "*" with credentials
+        // This is required for Spring Security 5.8+ when allowCredentials is true
+        configuration.setAllowedOriginPatterns(Arrays.asList(origins));
         
         // Allow all HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));

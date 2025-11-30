@@ -7,6 +7,7 @@ import apap.ti._5.tour_package_2306240156_be.model.Activity;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.CreatePlanRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePlanRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restservice.PlanRestService;
+import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.hamcrest.Matchers.*;
@@ -56,6 +58,7 @@ class PlanRestControllerTest {
         // Setup Package
         tourPackage = new Package();
         tourPackage.setId(packageId);
+        tourPackage.setUserId("test-user-id"); // Set userId for authorization
         tourPackage.setPackageName("Bali Adventure Package");
         tourPackage.setQuota(20);
         tourPackage.setPrice(5000000L);
@@ -95,6 +98,18 @@ class PlanRestControllerTest {
         updatePlanRequestDTO.setEndLocation("Temple B");
     }
 
+
+    // Helper method to create authenticated user for security context
+    private AuthenticatedUser createAuthenticatedUser() {
+        return AuthenticatedUser.builder()
+                .id("test-user-id")
+                .username("testuser")
+                .email("testuser@example.com")
+                .name("Test User")
+                .role("Customer")
+                .build();
+    }
+
     // ==================== POST /package/{id}/plans/create ====================
 
     @Test
@@ -102,7 +117,8 @@ class PlanRestControllerTest {
         when(planRestService.createPlan(eq(packageId), any(CreatePlanRequestDTO.class)))
                 .thenReturn(plan);
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPlanRequestDTO)))
                 .andExpect(status().isCreated())
@@ -141,7 +157,8 @@ class PlanRestControllerTest {
         when(planRestService.createPlan(eq(packageId), any(CreatePlanRequestDTO.class)))
                 .thenReturn(plan);
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPlanRequestDTO)))
                 .andExpect(status().isCreated())
@@ -172,7 +189,8 @@ class PlanRestControllerTest {
         when(planRestService.createPlan(eq(packageId), any(CreatePlanRequestDTO.class)))
                 .thenReturn(plan);
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPlanRequestDTO)))
                 .andExpect(status().isCreated())
@@ -191,7 +209,8 @@ class PlanRestControllerTest {
         invalidRequest.setStartLocation("Beach A");
         invalidRequest.setEndLocation("Beach B");
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
@@ -210,7 +229,8 @@ class PlanRestControllerTest {
         invalidRequest.setStartLocation("Beach A");
         invalidRequest.setEndLocation("Beach B");
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
@@ -227,7 +247,8 @@ class PlanRestControllerTest {
         invalidRequest.setStartLocation("Beach A");
         invalidRequest.setEndLocation("Beach B");
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
@@ -244,7 +265,8 @@ class PlanRestControllerTest {
         invalidRequest.setStartDate(LocalDateTime.of(2024, 6, 1, 9, 0));
         invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 1, 17, 0));
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
@@ -258,7 +280,8 @@ class PlanRestControllerTest {
         when(planRestService.createPlan(eq(packageId), any(CreatePlanRequestDTO.class)))
                 .thenThrow(new RuntimeException("Package not found"));
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPlanRequestDTO)))
                 .andExpect(status().isBadRequest())
@@ -274,7 +297,8 @@ class PlanRestControllerTest {
         when(planRestService.createPlan(eq(packageId), any(CreatePlanRequestDTO.class)))
                 .thenThrow(new RuntimeException("Cannot add plan to processed package"));
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPlanRequestDTO)))
                 .andExpect(status().isBadRequest())
@@ -290,7 +314,8 @@ class PlanRestControllerTest {
         when(planRestService.createPlan(eq(packageId), any(CreatePlanRequestDTO.class)))
                 .thenThrow(new RuntimeException("Plan with this name already exists"));
 
-        mockMvc.perform(post("/package/{id}/plans/create", packageId)
+        mockMvc.perform(post("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createPlanRequestDTO)))
                 .andExpect(status().isBadRequest())
@@ -306,7 +331,8 @@ class PlanRestControllerTest {
     void testGetPlanDetail_Success() throws Exception {
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}", planId)
+        mockMvc.perform(get("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
@@ -342,7 +368,8 @@ class PlanRestControllerTest {
 
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}", planId)
+        mockMvc.perform(get("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderedQuantities", hasSize(1)))
@@ -373,7 +400,8 @@ class PlanRestControllerTest {
 
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}", planId)
+        mockMvc.perform(get("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderedQuantities", hasSize(0))) // Filtered out
@@ -396,7 +424,8 @@ class PlanRestControllerTest {
 
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}", planId)
+        mockMvc.perform(get("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderedQuantities[0].activityName").value("-"))
@@ -412,7 +441,8 @@ class PlanRestControllerTest {
 
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}", planId)
+        mockMvc.perform(get("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.packageId").isEmpty())
@@ -427,7 +457,8 @@ class PlanRestControllerTest {
         when(planRestService.getPlanById(planId))
                 .thenThrow(new RuntimeException("Plan not found"));
 
-        mockMvc.perform(get("/plans/{id}", planId)
+        mockMvc.perform(get("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
@@ -441,7 +472,8 @@ class PlanRestControllerTest {
         when(planRestService.getPlanById(planId))
                 .thenThrow(new RuntimeException("Plan has been deleted"));
 
-        mockMvc.perform(get("/plans/{id}", planId)
+        mockMvc.perform(get("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
@@ -456,7 +488,8 @@ class PlanRestControllerTest {
     void testGetEditPlanForm_Success() throws Exception {
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}/edit", planId)
+        mockMvc.perform(get("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
@@ -502,7 +535,8 @@ class PlanRestControllerTest {
 
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}/edit", planId)
+        mockMvc.perform(get("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderedQuantities", hasSize(2)))
@@ -517,7 +551,8 @@ class PlanRestControllerTest {
         when(planRestService.getPlanById(planId))
                 .thenThrow(new RuntimeException("Plan not found"));
 
-        mockMvc.perform(get("/plans/{id}/edit", planId)
+        mockMvc.perform(get("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
@@ -530,7 +565,8 @@ class PlanRestControllerTest {
     void testGetEditPlanForm_EmptyOrderedQuantities() throws Exception {
         when(planRestService.getPlanById(planId)).thenReturn(plan);
 
-        mockMvc.perform(get("/plans/{id}/edit", planId)
+        mockMvc.perform(get("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.orderedQuantities", hasSize(0)));
@@ -556,7 +592,8 @@ class PlanRestControllerTest {
         when(planRestService.updatePlan(eq(planId), any(UpdatePlanRequestDTO.class)))
                 .thenReturn(updatedPlan);
 
-        mockMvc.perform(put("/plans/{id}/edit", planId)
+        mockMvc.perform(put("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePlanRequestDTO)))
                 .andExpect(status().isOk())
@@ -576,7 +613,8 @@ class PlanRestControllerTest {
     void testUpdatePlan_ValidationError() throws Exception {
         UpdatePlanRequestDTO invalidRequest = new UpdatePlanRequestDTO();
 
-        mockMvc.perform(put("/plans/{id}/edit", planId)
+        mockMvc.perform(put("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest())
@@ -590,7 +628,8 @@ class PlanRestControllerTest {
         when(planRestService.updatePlan(eq(planId), any(UpdatePlanRequestDTO.class)))
                 .thenThrow(new RuntimeException("Plan not found"));
 
-        mockMvc.perform(put("/plans/{id}/edit", planId)
+        mockMvc.perform(put("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePlanRequestDTO)))
                 .andExpect(status().isBadRequest())
@@ -606,7 +645,8 @@ class PlanRestControllerTest {
         when(planRestService.updatePlan(eq(planId), any(UpdatePlanRequestDTO.class)))
                 .thenThrow(new RuntimeException("Cannot update plan in processed package"));
 
-        mockMvc.perform(put("/plans/{id}/edit", planId)
+        mockMvc.perform(put("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePlanRequestDTO)))
                 .andExpect(status().isBadRequest())
@@ -622,7 +662,8 @@ class PlanRestControllerTest {
         when(planRestService.updatePlan(eq(planId), any(UpdatePlanRequestDTO.class)))
                 .thenThrow(new RuntimeException("Cannot update deleted plan"));
 
-        mockMvc.perform(put("/plans/{id}/edit", planId)
+        mockMvc.perform(put("/api/plans/{id}/edit", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updatePlanRequestDTO)))
                 .andExpect(status().isBadRequest())
@@ -636,7 +677,8 @@ class PlanRestControllerTest {
 
     @Test
     void testShowCreateForm_Success() throws Exception {
-        mockMvc.perform(get("/package/{id}/plans/create", packageId)
+        mockMvc.perform(get("/api/package/{id}/plans/create", packageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
@@ -650,7 +692,8 @@ class PlanRestControllerTest {
     void testShowCreateForm_DifferentPackageId() throws Exception {
         String differentPackageId = UUID.randomUUID().toString();
 
-        mockMvc.perform(get("/package/{id}/plans/create", differentPackageId)
+        mockMvc.perform(get("/api/package/{id}/plans/create", differentPackageId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").value("Ready to create plan for package: " + differentPackageId));
@@ -664,7 +707,8 @@ class PlanRestControllerTest {
     void testDeletePlan_Success() throws Exception {
         doNothing().when(planRestService).deletePlan(planId);
 
-        mockMvc.perform(delete("/plans/{id}", planId)
+        mockMvc.perform(delete("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
@@ -679,7 +723,8 @@ class PlanRestControllerTest {
         doThrow(new RuntimeException("Plan not found"))
                 .when(planRestService).deletePlan(planId);
 
-        mockMvc.perform(delete("/plans/{id}", planId)
+        mockMvc.perform(delete("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
@@ -693,7 +738,8 @@ class PlanRestControllerTest {
         doThrow(new RuntimeException("Cannot delete plan from processed package"))
                 .when(planRestService).deletePlan(planId);
 
-        mockMvc.perform(delete("/plans/{id}", planId)
+        mockMvc.perform(delete("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
@@ -707,7 +753,8 @@ class PlanRestControllerTest {
         doThrow(new RuntimeException("Plan already deleted"))
                 .when(planRestService).deletePlan(planId);
 
-        mockMvc.perform(delete("/plans/{id}", planId)
+        mockMvc.perform(delete("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Plan already deleted"));
@@ -720,7 +767,8 @@ class PlanRestControllerTest {
         doThrow(new RuntimeException("Cannot delete plan with existing activities"))
                 .when(planRestService).deletePlan(planId);
 
-        mockMvc.perform(delete("/plans/{id}", planId)
+        mockMvc.perform(delete("/api/plans/{id}", planId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Cannot delete plan with existing activities"));

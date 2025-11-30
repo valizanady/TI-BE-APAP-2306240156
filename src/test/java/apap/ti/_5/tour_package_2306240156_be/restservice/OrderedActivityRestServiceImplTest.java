@@ -128,18 +128,20 @@ class OrderedActivityRestServiceImplTest {
         testOrderedQuantity.setIsDeleted(false);
         testOrderedQuantity.setOrderedQuota(25);
         testOrderedQuantity.setPrice(1500000L);
-        
+
         OrderedQuantity other = OrderedQuantity.builder()
                 .id(UUID.randomUUID())
                 .orderedQuota(30)
                 .price(2000000L)
+                .price(2000000L)
                 .isDeleted(false)
+                .activity(testActivity) // Set activity to avoid NPE
                 .build();
-        
+
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
         testPlan.getOrderedQuantities().add(other);
         testPlan.setPrice(97500000L); // 25*1500000 + 30*2000000
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -157,17 +159,19 @@ class OrderedActivityRestServiceImplTest {
         testOrderedQuantity.setPlan(testPlan);
         testOrderedQuantity.setIsDeleted(false);
         testOrderedQuantity.setOrderedQuota(10);
-        
+
         OrderedQuantity other = OrderedQuantity.builder()
                 .id(UUID.randomUUID())
                 .orderedQuota(50)
                 .price(2000000L)
+                .price(2000000L)
                 .isDeleted(false)
+                .activity(testActivity) // Set activity to avoid NPE
                 .build();
-        
+
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
         testPlan.getOrderedQuantities().add(other);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -185,17 +189,17 @@ class OrderedActivityRestServiceImplTest {
         testOrderedQuantity.setIsDeleted(false);
         testOrderedQuantity.setOrderedQuota(25);
         testOrderedQuantity.setPrice(1500000L);
-        
+
         OrderedQuantity alreadyDeleted = OrderedQuantity.builder()
                 .id(UUID.randomUUID())
                 .orderedQuota(100)
                 .price(5000000L)
                 .isDeleted(true)
                 .build();
-        
+
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
         testPlan.getOrderedQuantities().add(alreadyDeleted);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -214,9 +218,9 @@ class OrderedActivityRestServiceImplTest {
         testOrderedQuantity.setIsDeleted(false);
         testOrderedQuantity.setOrderedQuota(25);
         testOrderedQuantity.setPrice(1500000L);
-        
+
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -235,7 +239,7 @@ class OrderedActivityRestServiceImplTest {
         testOrderedQuantity.setPlan(testPlan);
         testOrderedQuantity.setIsDeleted(null);
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -260,7 +264,8 @@ class OrderedActivityRestServiceImplTest {
 
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findById("ACT001")).thenReturn(Optional.of(testActivity));
-        when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
         OrderedQuantity result = orderedActivityRestService.addActivityToPlan(testPlanId, request);
@@ -278,7 +283,8 @@ class OrderedActivityRestServiceImplTest {
 
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findById("ACT001")).thenReturn(Optional.of(testActivity));
-        when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
         OrderedQuantity result = orderedActivityRestService.addActivityToPlan(testPlanId, request);
@@ -346,20 +352,20 @@ class OrderedActivityRestServiceImplTest {
                 .orderedQuota(5)
                 .price(2000000L)
                 .isDeleted(false)
+                .activity(testActivity) // Set activity to avoid NPE
                 .build();
         testPlan.getOrderedQuantities().add(existing);
 
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findById("ACT001")).thenReturn(Optional.of(testActivity));
-        when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
         orderedActivityRestService.addActivityToPlan(testPlanId, request);
 
         // Should calculate: (5 * 2000000) + (10 * 1500000) = 25000000
-        verify(planRepository).save(argThat(plan -> 
-            plan.getPrice() != null && plan.getPrice() > 0
-        ));
+        verify(planRepository).save(argThat(plan -> plan.getPrice() != null && plan.getPrice() > 0));
     }
 
     @Test
@@ -377,11 +383,8 @@ class OrderedActivityRestServiceImplTest {
 
         orderedActivityRestService.updateOrderedActivity(testOrderedQuantityId, 30);
 
-        verify(planRepository).save(argThat(plan -> 
-            plan.getPrice() != null
-        ));
+        verify(planRepository).save(argThat(plan -> plan.getPrice() != null));
     }
-
 
     @Test
     void testGetEligibleActivities_PlanNotFound() {
@@ -390,7 +393,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.getEligibleActivities(testPlanId);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan not found with id:"));
         verify(planRepository).findById(testPlanId);
         verify(activityRepository, never()).findEligibleActivitiesForPlan(any(), any(), any(), any(), any());
@@ -415,9 +418,9 @@ class OrderedActivityRestServiceImplTest {
                 .activity(testActivity)
                 .isDeleted(false)
                 .build();
-        
+
         testPlan.getOrderedQuantities().add(activeOrderedQuantity);
-        
+
         List<Activity> allActivities = List.of(testActivity, testActivity2);
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findEligibleActivitiesForPlan(any(), any(), any(), any(), any()))
@@ -436,9 +439,9 @@ class OrderedActivityRestServiceImplTest {
                 .activity(testActivity)
                 .isDeleted(true)
                 .build();
-        
+
         testPlan.getOrderedQuantities().add(deletedOrderedQuantity);
-        
+
         List<Activity> allActivities = List.of(testActivity);
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findEligibleActivitiesForPlan(any(), any(), any(), any(), any()))
@@ -457,16 +460,16 @@ class OrderedActivityRestServiceImplTest {
                 .activity(testActivity)
                 .isDeleted(false)
                 .build();
-        
+
         OrderedQuantity deleted1 = OrderedQuantity.builder()
                 .id(UUID.randomUUID())
                 .activity(testActivity2)
                 .isDeleted(true)
                 .build();
-        
+
         testPlan.getOrderedQuantities().add(active1);
         testPlan.getOrderedQuantities().add(deleted1);
-        
+
         List<Activity> allActivities = List.of(testActivity, testActivity2);
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findEligibleActivitiesForPlan(any(), any(), any(), any(), any()))
@@ -516,7 +519,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertTrue(exception.getMessage().contains("Plan not found with id:"));
         verify(activityRepository, never()).findById(any());
     }
@@ -533,7 +536,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertEquals("Package not found for this plan", exception.getMessage());
     }
 
@@ -549,7 +552,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertEquals("Cannot add activity. Package status must be 'Pending'", exception.getMessage());
     }
 
@@ -565,7 +568,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertTrue(exception.getMessage().contains("Activity not found with id:"));
     }
 
@@ -582,7 +585,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertEquals("Activity type must match plan activity type", exception.getMessage());
     }
 
@@ -599,7 +602,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertTrue(exception.getMessage().contains("Activity start date/time"));
         assertTrue(exception.getMessage().contains("must be on or after plan start date/time"));
     }
@@ -617,7 +620,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertTrue(exception.getMessage().contains("Activity end date/time"));
         assertTrue(exception.getMessage().contains("must be on or before plan end date/time"));
     }
@@ -635,7 +638,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertEquals("Activity locations must match plan locations", exception.getMessage());
     }
 
@@ -658,7 +661,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertTrue(exception.getMessage().contains("Total ordered quantity in this plan"));
         assertTrue(exception.getMessage().contains("would exceed package quota"));
     }
@@ -678,7 +681,8 @@ class OrderedActivityRestServiceImplTest {
 
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findById("ACT001")).thenReturn(Optional.of(testActivity));
-        when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
         OrderedQuantity result = orderedActivityRestService.addActivityToPlan(testPlanId, request);
@@ -691,6 +695,7 @@ class OrderedActivityRestServiceImplTest {
         CreateOrderedActivityRequestDTO request = new CreateOrderedActivityRequestDTO();
         request.setActivityId("ACT001");
         request.setOrderedQuantity(100);
+        testPackage.setQuota(200); // Ensure package quota is enough so we hit activity capacity check
 
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findById("ACT001")).thenReturn(Optional.of(testActivity));
@@ -698,7 +703,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.addActivityToPlan(testPlanId, request);
         });
-        
+
         assertTrue(exception.getMessage().contains("Ordered quantity"));
         assertTrue(exception.getMessage().contains("cannot exceed activity capacity"));
     }
@@ -711,7 +716,8 @@ class OrderedActivityRestServiceImplTest {
 
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findById("ACT001")).thenReturn(Optional.of(testActivity));
-        when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
         orderedActivityRestService.addActivityToPlan(testPlanId, request);
@@ -727,7 +733,8 @@ class OrderedActivityRestServiceImplTest {
 
         when(planRepository.findById(testPlanId)).thenReturn(Optional.of(testPlan));
         when(activityRepository.findById("ACT001")).thenReturn(Optional.of(testActivity));
-        when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
         when(planRepository.save(any(Plan.class))).thenReturn(testPlan);
 
         orderedActivityRestService.addActivityToPlan(testPlanId, request);
@@ -740,7 +747,7 @@ class OrderedActivityRestServiceImplTest {
     @Test
     void testUpdateOrderedActivity_Success() {
         testOrderedQuantity.setPlan(testPlan);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -763,7 +770,7 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.updateOrderedActivity(testOrderedQuantityId, 30);
         });
-        
+
         assertEquals("Ordered activity not found", exception.getMessage());
     }
 
@@ -771,21 +778,21 @@ class OrderedActivityRestServiceImplTest {
     void testUpdateOrderedActivity_InvalidPackageStatus() {
         testOrderedQuantity.setPlan(testPlan);
         testPackage.setStatus("Processed");
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.updateOrderedActivity(testOrderedQuantityId, 30);
         });
-        
+
         assertEquals("Cannot update. Package status must be 'Pending'", exception.getMessage());
     }
 
     @Test
     void testUpdateOrderedActivity_ExceedsPackageQuota() {
         testOrderedQuantity.setPlan(testPlan);
-        
+
         OrderedQuantity other = OrderedQuantity.builder()
                 .id(UUID.randomUUID())
                 .orderedQuota(40)
@@ -793,14 +800,14 @@ class OrderedActivityRestServiceImplTest {
                 .build();
         testPlan.getOrderedQuantities().add(other);
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.updateOrderedActivity(testOrderedQuantityId, 15);
         });
-        
+
         assertTrue(exception.getMessage().contains("Total ordered in this plan"));
         assertTrue(exception.getMessage().contains("would exceed package quota"));
     }
@@ -809,15 +816,16 @@ class OrderedActivityRestServiceImplTest {
     void testUpdateOrderedActivity_ExceedsActivityCapacity() {
         testOrderedQuantity.setPlan(testPlan);
         testOrderedQuantity.setQuota(50);
+        testPackage.setQuota(200); // Ensure package quota is enough so we hit activity capacity check
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.updateOrderedActivity(testOrderedQuantityId, 100);
         });
-        
+
         assertTrue(exception.getMessage().contains("Ordered quantity"));
         assertTrue(exception.getMessage().contains("cannot exceed activity capacity"));
     }
@@ -825,7 +833,7 @@ class OrderedActivityRestServiceImplTest {
     @Test
     void testUpdateOrderedActivity_ExcludesDeletedFromCalculation() {
         testOrderedQuantity.setPlan(testPlan);
-        
+
         OrderedQuantity deleted = OrderedQuantity.builder()
                 .id(UUID.randomUUID())
                 .orderedQuota(100)
@@ -833,7 +841,7 @@ class OrderedActivityRestServiceImplTest {
                 .build();
         testPlan.getOrderedQuantities().add(deleted);
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -849,7 +857,7 @@ class OrderedActivityRestServiceImplTest {
     void testUpdateOrderedActivity_StatusFulfilledWhenReachesQuota() {
         testOrderedQuantity.setPlan(testPlan);
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -865,7 +873,7 @@ class OrderedActivityRestServiceImplTest {
     void testUpdateOrderedActivity_StatusUnfulfilledWhenBelowQuota() {
         testOrderedQuantity.setPlan(testPlan);
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -884,7 +892,7 @@ class OrderedActivityRestServiceImplTest {
         testOrderedQuantity.setPlan(testPlan);
         testOrderedQuantity.setIsDeleted(false);
         testPlan.getOrderedQuantities().add(testOrderedQuantity);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class)))
@@ -907,21 +915,21 @@ class OrderedActivityRestServiceImplTest {
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.deleteOrderedActivity(testOrderedQuantityId);
         });
-        
+
         assertEquals("Ordered activity not found", exception.getMessage());
     }
 
     @Test
     void testDeleteOrderedActivity_AlreadyDeleted() {
         testOrderedQuantity.setIsDeleted(true);
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.deleteOrderedActivity(testOrderedQuantityId);
         });
-        
+
         assertEquals("Ordered activity is already deleted", exception.getMessage());
         verify(orderedQuantityRepository, never()).save(any());
     }
@@ -931,14 +939,14 @@ class OrderedActivityRestServiceImplTest {
         testOrderedQuantity.setPlan(testPlan);
         testOrderedQuantity.setIsDeleted(false);
         testPackage.setStatus("Processed");
-        
+
         when(orderedQuantityRepository.findById(testOrderedQuantityId))
                 .thenReturn(Optional.of(testOrderedQuantity));
 
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             orderedActivityRestService.deleteOrderedActivity(testOrderedQuantityId);
         });
-        
+
         assertEquals("Cannot delete. Package status must be 'Pending'", exception.getMessage());
     }
 }

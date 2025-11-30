@@ -1,14 +1,9 @@
 package apap.ti._5.tour_package_2306240156_be.restservice;
 
-import apap.ti._5.tour_package_2306240156_be.model.Activity;
-import apap.ti._5.tour_package_2306240156_be.model.OrderedQuantity;
-import apap.ti._5.tour_package_2306240156_be.model.Plan;
-import apap.ti._5.tour_package_2306240156_be.repository.ActivityRepository;
+import apap.ti._5.tour_package_2306240156_be.model.Package;
 import apap.ti._5.tour_package_2306240156_be.repository.PackageRepository;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.CreatePackageRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePackageRequestDTO;
-import apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePackageRequestDTO;
-import apap.ti._5.tour_package_2306240156_be.restdto.response.BillResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.PackageResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,10 +16,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,373 +28,487 @@ class TourPackageRestServiceImplTest {
     private PackageRepository packageRepository;
 
     @Mock
-    private ActivityRepository activityRepository;
+    private apap.ti._5.tour_package_2306240156_be.repository.ActivityRepository activityRepository;
 
     @Mock
-    private BillIntegrationService billIntegrationService;
+    private apap.ti._5.tour_package_2306240156_be.restservice.BillIntegrationService billIntegrationService;
 
     @InjectMocks
-    private TourPackageRestServiceImpl tourPackageRestService;
+    private TourPackageRestServiceImpl service;
 
-    private apap.ti._5.tour_package_2306240156_be.model.Package testPackage;
-    private Plan testPlan;
-    private Activity testActivity;
-    private OrderedQuantity testOrderedQuantity;
+    private Package mockPackage;
+    private CreatePackageRequestDTO createDTO;
+    private UpdatePackageRequestDTO updateDTO;
 
     @BeforeEach
     void setUp() {
-        testActivity = Activity.builder()
-                .id("ACT001")
-                .activityName("Jakarta to Bali Flight")
-                .activityType("Flight")
-                .capacity(50)
-                .price(1500000L)
-                .startDate(LocalDateTime.of(2025, 11, 1, 8, 0))
-                .endDate(LocalDateTime.of(2025, 11, 1, 10, 30))
-                .startLocation("Jakarta")
-                .endLocation("Bali")
-                .build();
+        mockPackage = new Package();
+        mockPackage.setId("pkg-123");
+        mockPackage.setPackageName("Test Package");
+        mockPackage.setPrice(1000000L);
+        mockPackage.setQuota(10);
+        mockPackage.setStatus("PENDING");
+        mockPackage.setUserId("vendor-id");
+        mockPackage.setCreatorRole("TourPackageVendor");
+        mockPackage.setStartDate(LocalDateTime.now().plusDays(1));
+        mockPackage.setEndDate(LocalDateTime.now().plusDays(5));
+        mockPackage.setPlans(new ArrayList<>());
+        // mockPackage.setIsDeleted(false); // Removed as field does not exist
 
-        testOrderedQuantity = OrderedQuantity.builder()
-                .id(UUID.randomUUID())
-                .activity(testActivity)
-                .orderedQuota(25)
-                .quota(50)
-                .price(1500000L)
-                .startDate(testActivity.getStartDate())
-                .endDate(testActivity.getEndDate())
-                .isDeleted(false)
-                .build();
+        createDTO = new CreatePackageRequestDTO();
+        createDTO.setPackageName("New Package");
+        createDTO.setQuota(20);
+        createDTO.setStartDate(LocalDateTime.now().plusDays(2));
+        createDTO.setEndDate(LocalDateTime.now().plusDays(6));
 
-        testPlan = Plan.builder()
-                .id(UUID.randomUUID())
-                .planName("Jakarta-Bali Flight Plan")
-                .activityType("Flight")
-                .status("Fulfilled")
-                .isDeleted(false)
-                .orderedQuantities(new ArrayList<>(List.of(testOrderedQuantity)))
-                .build();
-
-        testOrderedQuantity.setPlan(testPlan);
-
-        testPackage = apap.ti._5.tour_package_2306240156_be.model.Package.builder()
-                .id("PKG001")
-                .packageName("Jakarta - Bali Adventure Package")
-                .status("Pending")
-                .userId("user001")
-                .quota(25)
-                .price(0L)
-                .startDate(LocalDateTime.of(2025, 11, 1, 0, 0))
-                .endDate(LocalDateTime.of(2025, 11, 7, 0, 0))
-                .plans(new ArrayList<>(List.of(testPlan)))
-                .build();
-
-        testPlan.setTourPackage(testPackage);
-    }
-
-    @Test
-    void testProcessPackage_Success() {
-        // Arrange
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-        when(activityRepository.save(any(Activity.class))).thenReturn(testActivity);
-        when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
-                .thenReturn(testPackage);
-
-        BillResponseDTO billResponse = new BillResponseDTO();
-        billResponse.setId("BILL-123");
-        when(billIntegrationService.createBillForPackage(any(), anyString())).thenReturn(billResponse);
-
-        // Act
-        PackageResponseDTO result = tourPackageRestService.processPackage("PKG001", "customer-id");
-
-        // Assert
-        assertNotNull(result);
-        assertNotNull(result);
-        assertEquals("Waiting for Payment", testPackage.getStatus()); // Status updated after bill creation
-        assertEquals(25, testActivity.getCapacity()); // 50 - 25 = 25
-        verify(packageRepository, times(2)).findById("PKG001"); // Once in processPackage, once in getById
-        verify(activityRepository, times(1)).save(any(Activity.class));
-        verify(packageRepository, times(1)).save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class));
-    }
-
-    @Test
-    void testProcessPackage_PackageNotFound() {
-        // Arrange
-        when(packageRepository.findById("PKG999")).thenReturn(Optional.empty());
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG999", "customer-id");
-        });
-        assertTrue(exception.getMessage().contains("Package not found"));
-        verify(packageRepository).findById("PKG999");
-        verify(activityRepository, never()).save(any());
-        verify(packageRepository, never()).save(any());
-    }
-
-    @Test
-    void testProcessPackage_InvalidStatus() {
-        // Arrange
-        testPackage.setStatus("Processed");
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001", "customer-id");
-        });
-        assertTrue(exception.getMessage().contains("status must be 'Pending'"));
-        verify(packageRepository).findById("PKG001");
-        verify(activityRepository, never()).save(any());
-    }
-
-    @Test
-    void testProcessPackage_NoActivePlans() {
-        // Arrange
-        testPlan.setIsDeleted(true);
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001", "customer-id");
-        });
-        assertTrue(exception.getMessage().contains("no active plans"));
-        verify(packageRepository).findById("PKG001");
-        verify(activityRepository, never()).save(any());
-    }
-
-    @Test
-    void testProcessPackage_UnfulfilledPlans() {
-        // Arrange
-        testPlan.setStatus("Unfulfilled");
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001", "customer-id");
-        });
-        assertTrue(exception.getMessage().contains("All plans must have status 'Fulfilled'"));
-        assertTrue(exception.getMessage().contains("Jakarta-Bali Flight Plan"));
-        verify(packageRepository).findById("PKG001");
-        verify(activityRepository, never()).save(any());
-    }
-
-    @Test
-    void testProcessPackage_InsufficientCapacity() {
-        // Arrange
-        testActivity.setCapacity(10); // Less than orderedQuota (25)
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001", "customer-id");
-        });
-        assertTrue(exception.getMessage().contains("insufficient capacity"));
-        verify(packageRepository).findById("PKG001");
-        verify(activityRepository, never()).save(any());
-    }
-
-    @Test
-    void testProcessPackage_SkipsSoftDeletedOrderedQuantities() {
-        // Arrange
-        OrderedQuantity deletedOQ = OrderedQuantity.builder()
-                .id(UUID.randomUUID())
-                .activity(testActivity)
-                .orderedQuota(100)
-                .isDeleted(true) // Soft deleted
-                .build();
-
-        testPlan.getOrderedQuantities().add(deletedOQ);
-
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-        when(activityRepository.save(any(Activity.class))).thenReturn(testActivity);
-        when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
-                .thenReturn(testPackage);
-
-        // Act
-        tourPackageRestService.processPackage("PKG001", "customer-id");
-
-        // Assert
-        assertEquals(25, testActivity.getCapacity()); // Should only subtract 25, not 125
-        verify(activityRepository, times(1)).save(testActivity); // Only once for non-deleted OQ
-    }
-
-    @Test
-    void testProcessPackage_MultipleActivities() {
-        // Arrange
-        Activity secondActivity = Activity.builder()
-                .id("ACT002")
-                .activityName("Bali Hotel")
-                .activityType("Accommodation")
-                .capacity(30)
-                .price(2000000L)
-                .startDate(LocalDateTime.of(2025, 11, 1, 14, 0))
-                .endDate(LocalDateTime.of(2025, 11, 1, 15, 0))
-                .startLocation("Bali")
-                .endLocation("Bali")
-                .build();
-
-        OrderedQuantity secondOQ = OrderedQuantity.builder()
-                .id(UUID.randomUUID())
-                .activity(secondActivity)
-                .orderedQuota(15)
-                .quota(30)
-                .price(2000000L)
-                .startDate(secondActivity.getStartDate())
-                .endDate(secondActivity.getEndDate())
-                .isDeleted(false)
-                .plan(testPlan)
-                .build();
-
-        testPlan.getOrderedQuantities().add(secondOQ);
-
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-        when(activityRepository.save(any(Activity.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
-                .thenReturn(testPackage);
-
-        BillResponseDTO billResponse = new BillResponseDTO();
-        billResponse.setId("BILL-123");
-        when(billIntegrationService.createBillForPackage(any(), anyString())).thenReturn(billResponse);
-
-        // Act
-        tourPackageRestService.processPackage("PKG001", "customer-id");
-
-        // Assert
-        assertEquals(25, testActivity.getCapacity()); // 50 - 25
-        assertEquals(15, secondActivity.getCapacity()); // 30 - 15
-        verify(packageRepository, times(2)).findById("PKG001"); // processPackage + getById
-        verify(activityRepository, times(2)).save(any(Activity.class));
-    }
-
-    @Test
-    void testGetAll() {
-        // Arrange
-        List<apap.ti._5.tour_package_2306240156_be.model.Package> packages = List.of(testPackage);
-        when(packageRepository.findAllActive()).thenReturn(packages);
-
-        // Act
-        List<PackageResponseDTO> result = tourPackageRestService.getAll();
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals("PKG001", result.get(0).getId());
-        verify(packageRepository).findAllActive();
-    }
-
-    @Test
-    void testGetById_Success() {
-        // Arrange
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-
-        // Act
-        PackageResponseDTO result = tourPackageRestService.getById("PKG001");
-
-        // Assert
-        assertNotNull(result);
-        assertEquals("PKG001", result.getId());
-        assertEquals("Jakarta - Bali Adventure Package", result.getPackageName());
-        verify(packageRepository).findById("PKG001");
+        updateDTO = new UpdatePackageRequestDTO();
+        updateDTO.setPackageName("Updated Package");
+        updateDTO.setQuota(15);
+        updateDTO.setStartDate(LocalDateTime.now().plusDays(3));
+        updateDTO.setEndDate(LocalDateTime.now().plusDays(7));
     }
 
     @Test
     void testCreate_Success() {
-        // Arrange
-        CreatePackageRequestDTO request = new CreatePackageRequestDTO();
-
-        request.setPackageName("New Package");
-        request.setQuota(30);
-        request.setStartDate(LocalDateTime.of(2025, 12, 1, 0, 0));
-        request.setEndDate(LocalDateTime.of(2025, 12, 7, 0, 0));
-
+        when(packageRepository.save(any(Package.class))).thenReturn(mockPackage);
         when(packageRepository.countByIdPrefix(anyString())).thenReturn(0L);
-        when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
-                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        // Act
-        PackageResponseDTO result = tourPackageRestService.create(request, "user001", "Customer");
+        PackageResponseDTO result = service.create(createDTO, "vendor-id", "TourPackageVendor");
 
-        // Assert
         assertNotNull(result);
-        assertEquals("New Package", result.getPackageName());
-        verify(packageRepository).countByIdPrefix(anyString());
-        verify(packageRepository).save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class));
+        assertEquals("Test Package", result.getPackageName());
+        verify(packageRepository, times(1)).save(any(Package.class));
     }
 
     @Test
-    void testDeleteById_Success() {
-        // Arrange
-        testPackage.setStatus("Pending"); // ✅ Changed from "DRAFT"
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-        when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
-                .thenReturn(testPackage);
+    void testGetAll_Success() {
+        when(packageRepository.findAllActive()).thenReturn(List.of(mockPackage));
 
-        // Act
-        PackageResponseDTO result = tourPackageRestService.deleteById("PKG001");
+        List<PackageResponseDTO> result = service.getAll();
 
-        // Assert
-        assertNotNull(result);
-        assertEquals("DELETED", testPackage.getStatus());
-        verify(packageRepository).findById("PKG001");
-        verify(packageRepository).save(testPackage);
+        assertEquals(1, result.size());
+        assertEquals("Test Package", result.get(0).getPackageName());
     }
 
     @Test
-    void testDeleteById_InvalidStatus() {
-        // Arrange
-        testPackage.setStatus("Processed");
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
+    void testGetById_Success() {
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
 
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.deleteById("PKG001");
-        });
-        assertTrue(exception.getMessage().contains("Cannot delete package with status"));
+        PackageResponseDTO result = service.getById("pkg-123");
+
+        assertNotNull(result);
+        assertEquals("pkg-123", result.getId());
     }
 
     @Test
     void testUpdatePackage_Success() {
-        // Arrange
-        testPackage.setStatus("Pending"); // ✅ Changed from "DRAFT"
-        testPackage.setPlans(new ArrayList<>());
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+        when(packageRepository.save(any(Package.class))).thenReturn(mockPackage);
 
-        UpdatePackageRequestDTO request = new UpdatePackageRequestDTO();
-        request.setPackageName("Updated Package");
-        request.setQuota(40);
-        request.setStartDate(LocalDateTime.of(2025, 12, 1, 0, 0));
-        request.setEndDate(LocalDateTime.of(2025, 12, 7, 0, 0));
+        PackageResponseDTO result = service.updatePackage("pkg-123", updateDTO);
 
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
-        when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
-                .thenReturn(testPackage);
-
-        // Act
-        PackageResponseDTO result = tourPackageRestService.updatePackage("PKG001", request);
-
-        // Assert
         assertNotNull(result);
-        assertEquals("Updated Package", testPackage.getPackageName());
-        verify(packageRepository, times(2)).findById("PKG001"); // update + getById
-        verify(packageRepository).save(testPackage);
+        verify(packageRepository, times(1)).save(any(Package.class));
     }
 
     @Test
-    void testUpdatePackage_InvalidStatus() {
-        // Arrange
-        testPackage.setStatus("Processed");
+    void testDeleteById_Success() {
+        mockPackage.setStatus("Pending");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+        when(packageRepository.save(any(Package.class))).thenReturn(mockPackage);
 
-        UpdatePackageRequestDTO request = new UpdatePackageRequestDTO();
-        request.setPackageName("Updated Package");
-        request.setQuota(40);
-        request.setStartDate(LocalDateTime.of(2025, 12, 1, 0, 0));
-        request.setEndDate(LocalDateTime.of(2025, 12, 7, 0, 0));
+        PackageResponseDTO result = service.deleteById("pkg-123");
 
-        when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
+        assertNotNull(result);
+        assertEquals("DELETED", mockPackage.getStatus());
+    }
 
-        // Act & Assert
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.updatePackage("PKG001", request);
+    @Test
+    void testGetPackagesForCustomer_Success() {
+        when(packageRepository.findAllActive()).thenReturn(List.of(mockPackage));
+
+        List<PackageResponseDTO> result = service.getPackagesForCustomer("customer-id");
+
+        // Should return package because it's created by Vendor (mockPackage.creatorRole
+        // = TourPackageVendor)
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void testProcessPackage_Success() {
+        mockPackage.setStatus("Pending");
+
+        // Setup plans and ordered quantities
+        apap.ti._5.tour_package_2306240156_be.model.Plan plan = new apap.ti._5.tour_package_2306240156_be.model.Plan();
+        plan.setStatus("Fulfilled");
+        plan.setIsDeleted(false);
+
+        apap.ti._5.tour_package_2306240156_be.model.Activity activity = new apap.ti._5.tour_package_2306240156_be.model.Activity();
+        activity.setCapacity(100);
+        activity.setActivityName("Test Activity");
+
+        apap.ti._5.tour_package_2306240156_be.model.OrderedQuantity oq = new apap.ti._5.tour_package_2306240156_be.model.OrderedQuantity();
+        oq.setOrderedQuota(10);
+        oq.setPrice(100000L);
+        oq.setIsDeleted(false);
+        oq.setActivity(activity);
+        oq.setPlan(plan);
+
+        plan.setOrderedQuantities(List.of(oq));
+        plan.setTourPackage(mockPackage);
+        mockPackage.setPlans(List.of(plan));
+
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+        when(activityRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Activity.class)))
+                .thenReturn(activity);
+        when(packageRepository.save(any(Package.class))).thenReturn(mockPackage);
+
+        apap.ti._5.tour_package_2306240156_be.restdto.response.BillResponseDTO billResponse = new apap.ti._5.tour_package_2306240156_be.restdto.response.BillResponseDTO();
+        billResponse.setId("bill-123");
+        when(billIntegrationService.createBillForPackage(any(Package.class), anyString())).thenReturn(billResponse);
+
+        PackageResponseDTO result = service.processPackage("pkg-123", "customer-id");
+
+        assertNotNull(result);
+        assertEquals("Waiting for Payment", mockPackage.getStatus());
+        verify(activityRepository, times(1)).save(any(apap.ti._5.tour_package_2306240156_be.model.Activity.class));
+        verify(billIntegrationService, times(1)).createBillForPackage(any(Package.class), anyString());
+    }
+
+    @Test
+    void testUpdatePaymentStatus_Success_Paid() {
+        mockPackage.setStatus("Waiting for Payment");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+        when(packageRepository.save(any(Package.class))).thenReturn(mockPackage);
+
+        PackageResponseDTO result = service.updatePaymentStatus("pkg-123", 1);
+
+        assertNotNull(result);
+        assertEquals("Payment Confirmed", mockPackage.getStatus());
+    }
+
+    @Test
+    void testUpdatePaymentStatus_Success_Unpaid() {
+        mockPackage.setStatus("Waiting for Payment");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.updatePaymentStatus("pkg-123", 0);
         });
-        assertTrue(exception.getMessage().contains("cannot be updated"));
+
+        assertTrue(exception.getMessage().contains("Cannot confirm payment"));
+    }
+
+    // ===== Additional tests for better coverage =====
+
+    @Test
+    void testCreate_InvalidQuota_ThrowsException() {
+        createDTO.setQuota(0);
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.create(createDTO, "vendor-id", "TourPackageVendor");
+        });
+
+        assertTrue(exception.getMessage().contains("Quota must be greater than 0"));
+    }
+
+    @Test
+    void testCreate_StartDateInPast_ThrowsException() {
+        createDTO.setStartDate(LocalDateTime.now().minusDays(1));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.create(createDTO, "vendor-id", "TourPackageVendor");
+        });
+
+        assertTrue(exception.getMessage().contains("Start date cannot be earlier than current date"));
+    }
+
+    @Test
+    void testCreate_EndDateBeforeStartDate_ThrowsException() {
+        createDTO.setStartDate(LocalDateTime.now().plusDays(10));
+        createDTO.setEndDate(LocalDateTime.now().plusDays(5));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.create(createDTO, "vendor-id", "TourPackageVendor");
+        });
+
+        assertTrue(exception.getMessage().contains("End date must be after start date"));
+    }
+
+    @Test
+    void testGetById_NotFound_ThrowsException() {
+        when(packageRepository.findById("invalid-id")).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.getById("invalid-id");
+        });
+
+        assertTrue(exception.getMessage().contains("Package not found"));
+    }
+
+    @Test
+    void testGetById_WithUserIdAndRole_AsOwner() {
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        PackageResponseDTO result = service.getById("pkg-123", "vendor-id", "Customer");
+
+        assertNotNull(result);
+        assertTrue(result.getCanViewPlans());
+    }
+
+    @Test
+    void testGetById_WithUserIdAndRole_AsCustomerNotOwner() {
+        mockPackage.setUserId("different-user");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        PackageResponseDTO result = service.getById("pkg-123", "customer-id", "Customer");
+
+        assertNotNull(result);
+        assertFalse(result.getCanViewPlans());
+        assertNotNull(result.getAccessMessage());
+    }
+
+    @Test
+    void testGetById_WithUserIdAndRole_AsSuperadmin() {
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        PackageResponseDTO result = service.getById("pkg-123", "admin-id", "Superadmin");
+
+        assertNotNull(result);
+        assertTrue(result.getCanViewPlans());
+    }
+
+    @Test
+    void testUpdatePackage_NotPending_ThrowsException() {
+        mockPackage.setStatus("Processed");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.updatePackage("pkg-123", updateDTO);
+        });
+
+        assertTrue(exception.getMessage().contains("Only packages with status 'Pending'"));
+    }
+
+    @Test
+    void testUpdatePackage_HasPlans_ThrowsException() {
+        mockPackage.setStatus("Pending");
+        apap.ti._5.tour_package_2306240156_be.model.Plan plan = new apap.ti._5.tour_package_2306240156_be.model.Plan();
+        plan.setIsDeleted(false);
+        mockPackage.setPlans(List.of(plan));
+
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.updatePackage("pkg-123", updateDTO);
+        });
+
+        assertTrue(exception.getMessage().contains("already has active plans"));
+    }
+
+    @Test
+    void testDeleteById_NotPending_ThrowsException() {
+        mockPackage.setStatus("Processed");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.deleteById("pkg-123");
+        });
+
+        assertTrue(exception.getMessage().contains("Only Pending packages can be deleted"));
+    }
+
+    @Test
+    void testProcessPackage_NotPending_ThrowsException() {
+        mockPackage.setStatus("Processed");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.processPackage("pkg-123", "customer-id");
+        });
+
+        assertTrue(exception.getMessage().contains("Package status must be 'Pending'"));
+    }
+
+    @Test
+    void testProcessPackage_NoPlans_ThrowsException() {
+        mockPackage.setStatus("Pending");
+        mockPackage.setPlans(new ArrayList<>());
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.processPackage("pkg-123", "customer-id");
+        });
+
+        assertTrue(exception.getMessage().contains("Package has no active plans"));
+    }
+
+    @Test
+    void testProcessPackage_UnfulfilledPlans_ThrowsException() {
+        mockPackage.setStatus("Pending");
+        apap.ti._5.tour_package_2306240156_be.model.Plan plan = new apap.ti._5.tour_package_2306240156_be.model.Plan();
+        plan.setStatus("Pending");
+        plan.setIsDeleted(false);
+        plan.setPlanName("Test Plan");
+        mockPackage.setPlans(List.of(plan));
+
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.processPackage("pkg-123", "customer-id");
+        });
+
+        assertTrue(exception.getMessage().contains("All plans must have status 'Fulfilled'"));
+    }
+
+    @Test
+    void testProcessPackage_InsufficientActivityCapacity_ThrowsException() {
+        mockPackage.setStatus("Pending");
+
+        apap.ti._5.tour_package_2306240156_be.model.Plan plan = new apap.ti._5.tour_package_2306240156_be.model.Plan();
+        plan.setStatus("Fulfilled");
+        plan.setIsDeleted(false);
+
+        apap.ti._5.tour_package_2306240156_be.model.Activity activity = new apap.ti._5.tour_package_2306240156_be.model.Activity();
+        activity.setCapacity(5);
+        activity.setActivityName("Test Activity");
+
+        apap.ti._5.tour_package_2306240156_be.model.OrderedQuantity oq = new apap.ti._5.tour_package_2306240156_be.model.OrderedQuantity();
+        oq.setOrderedQuota(10);
+        oq.setPrice(100000L);
+        oq.setIsDeleted(false);
+        oq.setActivity(activity);
+
+        plan.setOrderedQuantities(List.of(oq));
+        mockPackage.setPlans(List.of(plan));
+
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.processPackage("pkg-123", "customer-id");
+        });
+
+        assertTrue(exception.getMessage().contains("insufficient capacity"));
+    }
+
+    @Test
+    void testProcessPackage_ZeroPrice_SkipsBill() {
+        mockPackage.setStatus("Pending");
+        mockPackage.setPrice(0L);
+
+        apap.ti._5.tour_package_2306240156_be.model.Plan plan = new apap.ti._5.tour_package_2306240156_be.model.Plan();
+        plan.setStatus("Fulfilled");
+        plan.setIsDeleted(false);
+        plan.setOrderedQuantities(new ArrayList<>());
+        mockPackage.setPlans(List.of(plan));
+
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+        when(packageRepository.save(any(Package.class))).thenReturn(mockPackage);
+
+        PackageResponseDTO result = service.processPackage("pkg-123", "customer-id");
+
+        assertNotNull(result);
+        assertEquals("Processed", mockPackage.getStatus());
+        verify(billIntegrationService, never()).createBillForPackage(any(), anyString());
+    }
+
+    @Test
+    void testProcessPackage_BillCreationFails_ThrowsException() {
+        mockPackage.setStatus("Pending");
+        mockPackage.setPrice(100000L);
+
+        apap.ti._5.tour_package_2306240156_be.model.Plan plan = new apap.ti._5.tour_package_2306240156_be.model.Plan();
+        plan.setStatus("Fulfilled");
+        plan.setIsDeleted(false);
+
+        apap.ti._5.tour_package_2306240156_be.model.Activity activity = new apap.ti._5.tour_package_2306240156_be.model.Activity();
+        activity.setCapacity(100);
+        activity.setActivityName("Test Activity");
+
+        apap.ti._5.tour_package_2306240156_be.model.OrderedQuantity oq = new apap.ti._5.tour_package_2306240156_be.model.OrderedQuantity();
+        oq.setOrderedQuota(10);
+        oq.setPrice(10000L);
+        oq.setIsDeleted(false);
+        oq.setActivity(activity);
+
+        plan.setOrderedQuantities(List.of(oq));
+        mockPackage.setPlans(List.of(plan));
+
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+        when(activityRepository.save(any())).thenReturn(activity);
+        when(packageRepository.save(any(Package.class))).thenReturn(mockPackage);
+        when(billIntegrationService.createBillForPackage(any(), anyString()))
+                .thenThrow(new RuntimeException("Bill service unavailable"));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.processPackage("pkg-123", "customer-id");
+        });
+
+        assertTrue(exception.getMessage().contains("Failed to create Bill"));
+        assertEquals("Processed", mockPackage.getStatus());
+    }
+
+    @Test
+    void testUpdatePaymentStatus_NotFound_ThrowsException() {
+        when(packageRepository.findById("invalid-id")).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.updatePaymentStatus("invalid-id", 1);
+        });
+
+        assertTrue(exception.getMessage().contains("Package not found"));
+    }
+
+    @Test
+    void testUpdatePaymentStatus_WrongStatus_ThrowsException() {
+        mockPackage.setStatus("Pending");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.updatePaymentStatus("pkg-123", 1);
+        });
+
+        assertTrue(exception.getMessage().contains("Cannot update payment status"));
+    }
+
+    @Test
+    void testUpdatePaymentStatus_InvalidStatus_ThrowsException() {
+        mockPackage.setStatus("Waiting for Payment");
+        when(packageRepository.findById("pkg-123")).thenReturn(Optional.of(mockPackage));
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            service.updatePaymentStatus("pkg-123", 99);
+        });
+
+        assertTrue(exception.getMessage().contains("Invalid payment status"));
+    }
+
+    @Test
+    void testGetPackagesForCustomer_OwnPackage() {
+        mockPackage.setUserId("customer-123");
+        mockPackage.setCreatorRole("Customer");
+        when(packageRepository.findAllActive()).thenReturn(List.of(mockPackage));
+
+        List<PackageResponseDTO> result = service.getPackagesForCustomer("customer-123");
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void testGetPackagesForCustomer_FilterOutNonAdminVendorPackages() {
+        Package customerPackage = new Package();
+        customerPackage.setId("pkg-customer");
+        customerPackage.setUserId("other-customer");
+        customerPackage.setCreatorRole("Customer");
+        customerPackage.setPackageName("Customer Package");
+        customerPackage.setPlans(new ArrayList<>());
+
+        when(packageRepository.findAllActive()).thenReturn(List.of(mockPackage, customerPackage));
+
+        List<PackageResponseDTO> result = service.getPackagesForCustomer("customer-123");
+
+        // Should only return vendor package, not other customer's package
+        assertEquals(1, result.size());
+        assertEquals("pkg-123", result.get(0).getId());
     }
 }

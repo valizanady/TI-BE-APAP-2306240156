@@ -15,7 +15,6 @@ public class BaseController {
 
     @GetMapping("/")
     public Object baseResponse(@RequestParam(required = false) String token) {
-        // If token is present, redirect to frontend with token (auth callback flow)
         if (token != null && !token.isEmpty()) {
             return new RedirectView("http://2306240156-fe.hafizmuh.site/?token=" + token);
         }

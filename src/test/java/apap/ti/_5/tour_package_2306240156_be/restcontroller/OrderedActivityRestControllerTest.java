@@ -6,6 +6,7 @@ import apap.ti._5.tour_package_2306240156_be.repository.ActivityRepository;
 import apap.ti._5.tour_package_2306240156_be.repository.OrderedQuantityRepository;
 import apap.ti._5.tour_package_2306240156_be.repository.PlanRepository;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.CreateOrderedActivityRequestDTO;
+import apap.ti._5.tour_package_2306240156_be.security.AuthenticatedUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ import java.util.*;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -68,6 +70,7 @@ class OrderedActivityRestControllerTest {
         tourPackage.setStatus("PENDING");
         tourPackage.setStartDate(LocalDateTime.of(2024, 6, 1, 8, 0));
         tourPackage.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
+        tourPackage.setUserId("test-user-id"); // Set userId for authorization checks
 
         // Setup Plan
         plan = new Plan();
@@ -113,10 +116,23 @@ class OrderedActivityRestControllerTest {
         createRequest.setOrderedQuantity(10);
     }
 
+    // Helper method to create authenticated user for security context
+    private AuthenticatedUser createAuthenticatedUser() {
+        return AuthenticatedUser.builder()
+                .id("test-user-id")
+                .username("testuser")
+                .email("testuser@example.com")
+                .name("Test User")
+                .role("Customer")
+                .build();
+    }
+
     // ==================== GET /ordered-activities/eligible ====================
 
     @Test
     void testGetEligibleActivities_Success() throws Exception {
+        tourPackage.setUserId("test-user-id");
+        
         when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
         when(activityRepository.findEligibleActivitiesForPlan(
                 plan.getActivityType(),
@@ -126,7 +142,8 @@ class OrderedActivityRestControllerTest {
                 plan.getEndLocation()
         )).thenReturn(Arrays.asList(activity));
 
-        mockMvc.perform(get("/ordered-activities/eligible")
+        mockMvc.perform(get("/api/ordered-activities/eligible")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -151,7 +168,8 @@ class OrderedActivityRestControllerTest {
         when(activityRepository.findEligibleActivitiesForPlan(any(), any(), any(), any(), any()))
                 .thenReturn(Arrays.asList(activity, activity2));
 
-        mockMvc.perform(get("/ordered-activities/eligible")
+        mockMvc.perform(get("/api/ordered-activities/eligible")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -166,7 +184,8 @@ class OrderedActivityRestControllerTest {
         when(activityRepository.findEligibleActivitiesForPlan(any(), any(), any(), any(), any()))
                 .thenReturn(Collections.emptyList());
 
-        mockMvc.perform(get("/ordered-activities/eligible")
+        mockMvc.perform(get("/api/ordered-activities/eligible")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -179,7 +198,8 @@ class OrderedActivityRestControllerTest {
     void testGetEligibleActivities_PlanNotFound() throws Exception {
         when(planRepository.findById(planId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(get("/ordered-activities/eligible")
+        mockMvc.perform(get("/api/ordered-activities/eligible")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -190,7 +210,8 @@ class OrderedActivityRestControllerTest {
 
     @Test
     void testGetEligibleActivities_InvalidPlanIdFormat() throws Exception {
-        mockMvc.perform(get("/ordered-activities/eligible")
+        mockMvc.perform(get("/api/ordered-activities/eligible")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", "invalid-uuid")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -205,7 +226,8 @@ class OrderedActivityRestControllerTest {
 
         when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
 
-        mockMvc.perform(get("/ordered-activities/eligible")
+        mockMvc.perform(get("/api/ordered-activities/eligible")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -223,7 +245,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Collections.emptyList());
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -246,7 +269,8 @@ class OrderedActivityRestControllerTest {
         when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
         when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
 
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -272,7 +296,8 @@ class OrderedActivityRestControllerTest {
         when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(existingOq));
 
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -298,7 +323,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(existingOq));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -313,7 +339,8 @@ class OrderedActivityRestControllerTest {
     void testCreateOrderedActivity_PlanNotFound() throws Exception {
         when(planRepository.findById(planId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -328,7 +355,8 @@ class OrderedActivityRestControllerTest {
         when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
         when(activityRepository.findById(activityId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -340,7 +368,8 @@ class OrderedActivityRestControllerTest {
 
     @Test
     void testCreateOrderedActivity_InvalidPlanIdFormat() throws Exception {
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", "invalid-uuid")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -363,7 +392,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(deletedOq));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(post("/ordered-activities/create")
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
                         .param("planId", planId.toString())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -380,7 +410,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(orderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(put("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .param("quantity", "15")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -395,7 +426,8 @@ class OrderedActivityRestControllerTest {
     void testUpdateOrderedActivity_ExceedsCapacity() throws Exception {
         when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
 
-        mockMvc.perform(put("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .param("quantity", "50")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -415,7 +447,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(orderedQuantity, otherOq));
 
-        mockMvc.perform(put("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .param("quantity", "15")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest())
@@ -428,7 +461,8 @@ class OrderedActivityRestControllerTest {
     void testUpdateOrderedActivity_NotFound() throws Exception {
         when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(put("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .param("quantity", "15")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
@@ -449,7 +483,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(orderedQuantity, otherOq));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(put("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .param("quantity", "15")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
@@ -465,7 +500,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(orderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(delete("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Activity removed successfully"))
@@ -481,7 +517,8 @@ class OrderedActivityRestControllerTest {
     void testDeleteOrderedActivity_NotFound() throws Exception {
         when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.empty());
 
-        mockMvc.perform(delete("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isInternalServerError());
 
@@ -500,7 +537,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(orderedQuantity, otherOq));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(delete("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
@@ -520,7 +558,8 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(orderedQuantity, otherOq));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(delete("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
@@ -534,10 +573,295 @@ class OrderedActivityRestControllerTest {
         when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(orderedQuantity));
         when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(orderedQuantity);
 
-        mockMvc.perform(delete("/ordered-activities/{orderedActivityId}", orderedActivityId)
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk());
 
         verify(planRepository, times(1)).save(argThat(p -> "Unfulfilled".equals(p.getStatus())));
+    }
+
+    // ==================== Additional Edge Cases ====================
+
+    @Test
+    void testCreateOrderedActivity_PackageStatusNotPending() throws Exception {
+        tourPackage.setStatus("Processed");
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid Package Status"))
+                .andExpect(jsonPath("$.message").value(containsString("must be 'Pending'")));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrderedActivity_ActivityWithZeroCapacity() throws Exception {
+        activity.setCapacity(0);
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid Quota"))
+                .andExpect(jsonPath("$.message").value(containsString("quota must be greater than 0")));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrderedActivity_ActivityWithZeroPrice() throws Exception {
+        activity.setPrice(0L);
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid Price"))
+                .andExpect(jsonPath("$.message").value(containsString("price must be greater than 0")));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrderedActivity_NegativeOrderedQuantity() throws Exception {
+        createRequest.setOrderedQuantity(-5);
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid Ordered Quantity"))
+                .andExpect(jsonPath("$.message").value(containsString("must be greater than or equal to 0")));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrderedActivity_InvalidDateRange() throws Exception {
+        activity.setEndDate(LocalDateTime.of(2024, 5, 30, 10, 0)); // Before start date
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid Date Range"))
+                .andExpect(jsonPath("$.message").value(containsString("end date must be after start date")));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrderedActivity_PackageNotFound() throws Exception {
+        plan.setTourPackage(null);
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Package Not Found"));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrderedActivity_UpdateExistingActivity_Success() throws Exception {
+        // Existing activity with 10 quantity, adding 5 more
+        OrderedQuantity existing = new OrderedQuantity();
+        existing.setId(UUID.randomUUID());
+        existing.setActivity(activity);
+        existing.setPlan(plan);
+        existing.setOrderedQuota(10);
+        existing.setPrice(1500000L);
+        existing.setIsDeleted(false);
+        
+        plan.setOrderedQuantities(Arrays.asList(existing));
+
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(existing));
+        when(orderedQuantityRepository.save(any(OrderedQuantity.class))).thenReturn(existing);
+
+        createRequest.setOrderedQuantity(5);
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.orderedQuota").value(15)); // 10 + 5
+
+        verify(orderedQuantityRepository, times(1)).save(argThat(oq -> 
+            oq.getOrderedQuota() == 15 && oq.getId().equals(existing.getId())
+        ));
+    }
+
+    @Test
+    void testCreateOrderedActivity_UpdateExisting_ExceedsCapacity() throws Exception {
+        // Existing 25, adding 10 = 35 > capacity (30)
+        OrderedQuantity existing = new OrderedQuantity();
+        existing.setId(UUID.randomUUID());
+        existing.setActivity(activity);
+        existing.setPlan(plan);
+        existing.setOrderedQuota(25);
+        existing.setIsDeleted(false);
+        
+        plan.setOrderedQuantities(Arrays.asList(existing));
+
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(existing));
+
+        createRequest.setOrderedQuantity(10);
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Capacity Exceeded"));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testCreateOrderedActivity_UpdateExisting_ExceedsPackageQuota() throws Exception {
+        // Existing 45, adding 10 = 55 > package quota (50)
+        OrderedQuantity existing = new OrderedQuantity();
+        existing.setId(UUID.randomUUID());
+        existing.setActivity(activity);
+        existing.setPlan(plan);
+        existing.setOrderedQuota(45);
+        existing.setIsDeleted(false);
+        
+        plan.setOrderedQuantities(Arrays.asList(existing));
+
+        when(planRepository.findById(planId)).thenReturn(Optional.of(plan));
+        when(activityRepository.findById(activityId)).thenReturn(Optional.of(activity));
+        when(orderedQuantityRepository.findAll()).thenReturn(Arrays.asList(existing));
+
+        createRequest.setOrderedQuantity(10);
+
+        mockMvc.perform(post("/api/ordered-activities/create")
+                        .with(user(createAuthenticatedUser()))
+                        .param("planId", planId.toString())
+                        .content(objectMapper.writeValueAsString(createRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Quota Exceeded"));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateOrderedActivity_AlreadyDeleted() throws Exception {
+        orderedQuantity.setIsDeleted(true);
+        when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
+
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
+                        .param("quantity", "15")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Already Deleted"))
+                .andExpect(jsonPath("$.message").value(containsString("Cannot update deleted")));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateOrderedActivity_PackageNotPending() throws Exception {
+        tourPackage.setStatus("Processed");
+        when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
+
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
+                        .param("quantity", "15")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid Package Status"));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testUpdateOrderedActivity_NullQuantity() throws Exception {
+        when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
+
+        mockMvc.perform(put("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testDeleteOrderedActivity_AlreadyDeleted() throws Exception {
+        orderedQuantity.setIsDeleted(true);
+        when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
+
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Already Deleted"));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testDeleteOrderedActivity_PackageNotPending() throws Exception {
+        tourPackage.setStatus("Processed");
+        when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
+
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Invalid Package Status"));
+
+        verify(orderedQuantityRepository, never()).save(any());
+    }
+
+    @Test
+    void testDeleteOrderedActivity_PackageNotFound() throws Exception {
+        plan.setTourPackage(null);
+        when(orderedQuantityRepository.findById(orderedActivityId)).thenReturn(Optional.of(orderedQuantity));
+
+        mockMvc.perform(delete("/api/ordered-activities/{orderedActivityId}", orderedActivityId)
+                        .with(user(createAuthenticatedUser()))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Package Not Found"));
+
+        verify(orderedQuantityRepository, never()).save(any());
     }
 }

@@ -3,7 +3,7 @@ name: CI Pipeline
 on:
   push:
     branches:
-      - backlog
+      - main
 
 env:
   DOCKER_IMAGE_NAME: ${{ secrets.DOCKER_IMAGE_NAME }}

@@ -1,0 +1,1061 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1764542283308,114,GET All Activities,200,,Activity Browse Users 3-1,text,true,,14238,188,1,3,http://localhost:8080/api/activities,111,0,10
+1764542283619,5,GET All Packages,404,,Browse Packages Users 1-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,2,4,http://localhost:8080/api/packages,5,0,0
+1764542284448,5,GET All Locations,404,,Location Browse Users 2-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,1,4,http://localhost:8080/api/locations,5,0,1
+1764542286106,4,GET All Packages,404,,Browse Packages Users 1-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,2,6,http://localhost:8080/api/packages,4,0,1
+1764542286882,6,GET All Locations,404,,Location Browse Users 2-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,7,http://localhost:8080/api/locations,6,0,0
+1764542286962,32,GET All Activities,200,,Activity Browse Users 3-1,text,true,,14238,188,2,7,http://localhost:8080/api/activities,31,0,0
+1764542287132,4,GET All Packages,404,,Browse Packages Users 1-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,3,7,http://localhost:8080/api/packages,4,0,0
+1764542287416,4,GET All Locations,404,,Location Browse Users 2-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,7,http://localhost:8080/api/locations,4,0,1
+1764542287718,23,GET All Activities,200,,Activity Browse Users 3-2,text,true,,14238,188,2,7,http://localhost:8080/api/activities,23,0,2
+1764542289614,6,GET All Locations,404,,Location Browse Users 2-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,10,http://localhost:8080/api/locations,6,0,0
+1764542289660,4,GET All Packages,404,,Browse Packages Users 1-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,9,http://localhost:8080/api/packages,4,0,0
+1764542290010,24,GET All Activities,200,,Activity Browse Users 3-2,text,true,,14238,188,3,9,http://localhost:8080/api/activities,24,0,0
+1764542290342,5,GET All Locations,404,,Location Browse Users 2-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,5,0,0
+1764542290708,21,GET All Activities,200,,Activity Browse Users 3-1,text,true,,14238,188,3,9,http://localhost:8080/api/activities,21,0,0
+1764542290982,5,GET All Packages,404,,Browse Packages Users 1-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,8,http://localhost:8080/api/packages,5,0,2
+1764542291030,20,GET All Activities,200,,Activity Browse Users 3-3,text,true,,14238,188,2,8,http://localhost:8080/api/activities,20,0,1
+1764542291337,4,GET All Packages,404,,Browse Packages Users 1-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,8,http://localhost:8080/api/packages,3,0,0
+1764542291742,4,GET All Locations,404,,Location Browse Users 2-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,8,http://localhost:8080/api/locations,4,0,1
+1764542292599,3,GET All Packages,404,,Browse Packages Users 1-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,11,http://localhost:8080/api/packages,3,0,0
+1764542292643,23,GET All Activities,200,,Activity Browse Users 3-2,text,true,,14238,188,3,11,http://localhost:8080/api/activities,23,0,0
+1764542293555,5,GET All Packages,404,,Browse Packages Users 1-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,10,http://localhost:8080/api/packages,5,0,1
+1764542293619,19,GET All Activities,200,,Activity Browse Users 3-4,text,true,,14238,188,2,10,http://localhost:8080/api/activities,19,0,1
+1764542294206,4,GET All Packages,404,,Browse Packages Users 1-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,10,http://localhost:8080/api/packages,4,0,0
+1764542294264,4,GET All Locations,404,,Location Browse Users 2-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,10,http://localhost:8080/api/locations,3,0,0
+1764542294275,24,GET All Activities,200,,Activity Browse Users 3-3,text,true,,14238,188,2,9,http://localhost:8080/api/activities,23,0,0
+1764542294445,4,GET All Locations,404,,Location Browse Users 2-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,4,0,2
+1764542295063,4,GET All Locations,404,,Location Browse Users 2-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,4,0,0
+1764542295075,3,GET All Packages,404,,Browse Packages Users 1-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,3,0,1
+1764542295325,3,GET All Packages,404,,Browse Packages Users 1-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,3,0,0
+1764542295589,4,GET All Packages,404,,Browse Packages Users 1-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,4,0,0
+1764542296173,18,GET All Activities,200,,Activity Browse Users 3-4,text,true,,14238,188,2,10,http://localhost:8080/api/activities,18,0,0
+1764542296360,7,GET All Packages,404,,Browse Packages Users 1-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,7,0,0
+1764542297078,4,GET All Locations,404,,Location Browse Users 2-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,12,http://localhost:8080/api/locations,4,0,0
+1764542297162,4,GET All Packages,404,,Browse Packages Users 1-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,12,http://localhost:8080/api/packages,4,0,0
+1764542297451,3,GET All Locations,404,,Location Browse Users 2-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,12,http://localhost:8080/api/locations,3,0,0
+1764542297528,14,GET All Activities,200,,Activity Browse Users 3-4,text,true,,14238,188,3,11,http://localhost:8080/api/activities,14,0,0
+1764542297706,3,GET All Packages,404,,Browse Packages Users 1-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,3,0,0
+1764542297924,19,GET All Activities,200,,Activity Browse Users 3-3,text,true,,14238,188,2,10,http://localhost:8080/api/activities,19,0,0
+1764542298200,3,GET All Packages,404,,Browse Packages Users 1-1,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,0
+1764542298306,4,GET All Locations,404,,Location Browse Users 2-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,8,http://localhost:8080/api/locations,3,0,1
+1764542298939,3,GET All Packages,404,,Browse Packages Users 1-2,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,0
+1764542299149,3,GET All Locations,404,,Location Browse Users 2-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,8,http://localhost:8080/api/locations,3,0,0
+1764542299444,3,GET All Packages,404,,Browse Packages Users 1-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,7,http://localhost:8080/api/packages,3,0,0
+1764542299720,18,GET All Activities,200,,Activity Browse Users 3-5,text,true,,14238,188,1,7,http://localhost:8080/api/activities,18,0,1
+1764542299743,3,GET All Packages,404,,Browse Packages Users 1-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,7,http://localhost:8080/api/packages,3,0,0
+1764542300436,4,GET All Packages,404,,Browse Packages Users 1-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,7,http://localhost:8080/api/packages,3,0,0
+1764542300813,4,GET All Packages,404,,Browse Packages Users 1-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,4,0,0
+1764542301238,28,GET All Activities,200,,Activity Browse Users 3-5,text,true,,14238,188,2,9,http://localhost:8080/api/activities,28,0,0
+1764542301372,3,GET All Locations,404,,Location Browse Users 2-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,3,0,0
+1764542302636,3,GET All Packages,404,,Browse Packages Users 1-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,3,0,0
+1764542302959,59,GET All Packages,404,,Browse Packages Users 1-3,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,59,0,0
+1764542303180,4,GET All Packages,404,,Browse Packages Users 1-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,4,0,1
+1764542303901,4,GET All Packages,404,,Browse Packages Users 1-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,4,0,0
+1764542303900,5,GET All Packages,404,,Browse Packages Users 1-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,5,0,0
+1764542304133,26,GET All Activities,200,,Activity Browse Users 3-6,text,true,,14238,188,2,9,http://localhost:8080/api/activities,26,0,1
+1764542304234,3,GET All Packages,404,,Browse Packages Users 1-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,3,0,0
+1764542304481,4,GET All Locations,404,,Location Browse Users 2-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,4,0,1
+1764542304820,19,GET All Activities,200,,Activity Browse Users 3-5,text,true,,14238,188,3,12,http://localhost:8080/api/activities,19,0,0
+1764542305131,3,GET All Locations,404,,Location Browse Users 2-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,11,http://localhost:8080/api/locations,3,0,0
+1764542305947,6,GET All Packages,404,,Browse Packages Users 1-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,6,0,0
+1764542306063,31,GET All Activities,200,,Activity Browse Users 3-7,text,true,,14238,188,2,10,http://localhost:8080/api/activities,31,0,1
+1764542306328,4,GET All Packages,404,,Browse Packages Users 1-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,4,0,0
+1764542306678,4,GET All Locations,404,,Location Browse Users 2-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,10,http://localhost:8080/api/locations,4,0,1
+1764542306955,41,GET All Activities,200,,Activity Browse Users 3-6,text,true,,14238,188,2,10,http://localhost:8080/api/activities,41,0,0
+1764542307128,4,GET All Packages,404,,Browse Packages Users 1-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,4,0,1
+1764542307302,3,GET All Packages,404,,Browse Packages Users 1-5,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,3,0,0
+1764542307885,4,GET All Packages,404,,Browse Packages Users 1-4,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,4,0,0
+1764542307961,5,GET All Locations,404,,Location Browse Users 2-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,5,0,0
+1764542308586,3,GET All Packages,404,,Browse Packages Users 1-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,11,http://localhost:8080/api/packages,3,0,0
+1764542308691,16,GET All Activities,200,,Activity Browse Users 3-7,text,true,,14238,188,3,11,http://localhost:8080/api/activities,15,0,0
+1764542309172,3,GET All Packages,404,,Browse Packages Users 1-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,11,http://localhost:8080/api/packages,3,0,0
+1764542309184,17,GET All Activities,200,,Activity Browse Users 3-6,text,true,,14238,188,3,11,http://localhost:8080/api/activities,16,0,0
+1764542309772,3,GET All Packages,404,,Browse Packages Users 1-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,10,http://localhost:8080/api/packages,3,0,0
+1764542310367,124,GET All Activities,200,,Activity Browse Users 3-8,text,true,,14238,188,2,10,http://localhost:8080/api/activities,110,0,2
+1764542310468,83,GET All Locations,404,,Location Browse Users 2-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,11,http://localhost:8080/api/locations,83,0,0
+1764542310594,21,GET All Locations,404,,Location Browse Users 2-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,11,http://localhost:8080/api/locations,20,0,0
+1764542310925,3,GET All Packages,404,,Browse Packages Users 1-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,3,0,0
+1764542311181,3,GET All Locations,404,,Location Browse Users 2-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,10,http://localhost:8080/api/locations,3,0,0
+1764542311451,4,GET All Packages,404,,Browse Packages Users 1-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,4,0,0
+1764542311546,3,GET All Packages,404,,Browse Packages Users 1-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,3,0,0
+1764542311545,16,GET All Activities,200,,Activity Browse Users 3-7,text,true,,14238,188,2,10,http://localhost:8080/api/activities,16,0,0
+1764542312013,3,GET All Packages,404,,Browse Packages Users 1-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,0
+1764542312224,3,GET All Packages,404,,Browse Packages Users 1-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,0
+1764542313040,4,GET All Packages,404,,Browse Packages Users 1-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,11,http://localhost:8080/api/packages,4,0,1
+1764542313679,4,GET All Packages,404,,Browse Packages Users 1-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,7,12,http://localhost:8080/api/packages,4,0,0
+1764542313869,3,GET All Locations,404,,Location Browse Users 2-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,12,http://localhost:8080/api/locations,3,0,0
+1764542314116,4,GET All Locations,404,,Location Browse Users 2-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,11,http://localhost:8080/api/locations,4,0,1
+1764542314400,3,GET All Locations,404,,Location Browse Users 2-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,11,http://localhost:8080/api/locations,2,0,0
+1764542314464,15,GET All Activities,200,,Activity Browse Users 3-8,text,true,,14238,188,2,11,http://localhost:8080/api/activities,15,0,0
+1764542314633,17,GET All Activities,200,,Activity Browse Users 3-9,text,true,,14238,188,2,11,http://localhost:8080/api/activities,17,0,1
+1764542314869,3,GET All Packages,404,,Browse Packages Users 1-6,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,7,11,http://localhost:8080/api/packages,3,0,0
+1764542315234,3,GET All Packages,404,,Browse Packages Users 1-7,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,3,0,0
+1764542315592,13,GET All Activities,200,,Activity Browse Users 3-8,text,true,,14238,188,2,9,http://localhost:8080/api/activities,13,0,0
+1764542315728,3,GET All Packages,404,,Browse Packages Users 1-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,3,0,0
+1764542315745,2,GET All Packages,404,,Browse Packages Users 1-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,2,0,0
+1764542316021,3,GET All Locations,404,,Location Browse Users 2-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,7,http://localhost:8080/api/locations,3,0,0
+1764542316224,3,GET All Packages,404,,Browse Packages Users 1-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,7,http://localhost:8080/api/packages,3,0,0
+1764542316463,4,GET All Packages,404,,Browse Packages Users 1-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,7,http://localhost:8080/api/packages,4,0,2
+1764542316486,2,GET All Packages,404,,Browse Packages Users 1-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,7,http://localhost:8080/api/packages,2,0,0
+1764542316667,2,GET All Locations,404,,Location Browse Users 2-8,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,10,http://localhost:8080/api/locations,2,0,0
+1764542316946,18,GET All Activities,200,,Activity Browse Users 3-9,text,true,,14238,188,2,9,http://localhost:8080/api/activities,17,0,0
+1764542318306,3,GET All Packages,404,,Browse Packages Users 1-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,3,0,0
+1764542318629,3,GET All Packages,404,,Browse Packages Users 1-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,3,0,0
+1764542318761,3,GET All Locations,404,,Location Browse Users 2-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,8,http://localhost:8080/api/locations,3,0,1
+1764542319531,4,GET All Packages,404,,Browse Packages Users 1-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,8,http://localhost:8080/api/packages,4,0,1
+1764542319590,3,GET All Locations,404,,Location Browse Users 2-9,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,3,0,0
+1764542320171,4,GET All Packages,404,,Browse Packages Users 1-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,4,0,0
+1764542320287,13,GET All Activities,200,,Activity Browse Users 3-10,text,true,,14238,188,2,8,http://localhost:8080/api/activities,13,0,0
+1764542320758,4,GET All Packages,404,,Browse Packages Users 1-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,10,http://localhost:8080/api/packages,4,0,0
+1764542320882,11,GET All Activities,200,,Activity Browse Users 3-9,text,true,,14238,188,3,10,http://localhost:8080/api/activities,10,0,0
+1764542320976,6,GET All Packages,404,,Browse Packages Users 1-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,6,0,0
+1764542321008,3,GET All Locations,404,,Location Browse Users 2-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,3,0,0
+1764542322326,3,GET All Packages,404,,Browse Packages Users 1-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,9,http://localhost:8080/api/packages,3,0,0
+1764542322534,4,GET All Locations,404,,Location Browse Users 2-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,10,http://localhost:8080/api/locations,4,0,1
+1764542322771,11,GET All Packages,404,,Browse Packages Users 1-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,11,0,0
+1764542323030,10,GET All Activities,200,,Activity Browse Users 3-11,text,true,,14238,188,2,10,http://localhost:8080/api/activities,10,0,1
+1764542323396,4,GET All Packages,404,,Browse Packages Users 1-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,4,0,1
+1764542324132,2,GET All Packages,404,,Browse Packages Users 1-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,2,0,0
+1764542324131,15,GET All Activities,200,,Activity Browse Users 3-10,text,true,,14238,188,2,9,http://localhost:8080/api/activities,15,0,0
+1764542324635,3,GET All Locations,404,,Location Browse Users 2-10,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,11,http://localhost:8080/api/locations,3,0,0
+1764542324806,3,GET All Packages,404,,Browse Packages Users 1-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,10,http://localhost:8080/api/packages,2,0,0
+1764542325347,3,GET All Locations,404,,Location Browse Users 2-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,10,http://localhost:8080/api/locations,3,0,0
+1764542325362,16,GET All Activities,200,,Activity Browse Users 3-11,text,true,,14238,188,3,10,http://localhost:8080/api/activities,15,0,0
+1764542325478,3,GET All Packages,404,,Browse Packages Users 1-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,10,http://localhost:8080/api/packages,3,0,0
+1764542325698,3,GET All Packages,404,,Browse Packages Users 1-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,11,http://localhost:8080/api/packages,3,0,0
+1764542325852,15,GET All Activities,200,,Activity Browse Users 3-12,text,true,,14238,188,3,11,http://localhost:8080/api/activities,15,0,1
+1764542326241,2,GET All Packages,404,,Browse Packages Users 1-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,11,http://localhost:8080/api/packages,2,0,0
+1764542326313,2,GET All Locations,404,,Location Browse Users 2-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,11,http://localhost:8080/api/locations,2,0,0
+1764542327017,17,GET All Activities,200,,Activity Browse Users 3-10,text,true,,14238,188,3,11,http://localhost:8080/api/activities,17,0,0
+1764542327305,3,GET All Packages,404,,Browse Packages Users 1-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,3,0,0
+1764542327581,3,GET All Locations,404,,Location Browse Users 2-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,10,http://localhost:8080/api/locations,3,0,0
+1764542327639,15,GET All Activities,200,,Activity Browse Users 3-12,text,true,,14238,188,2,9,http://localhost:8080/api/activities,14,0,0
+1764542327768,3,GET All Packages,404,,Browse Packages Users 1-16,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,1
+1764542328675,3,GET All Locations,404,,Location Browse Users 2-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,12,http://localhost:8080/api/locations,3,0,0
+1764542328832,3,GET All Packages,404,,Browse Packages Users 1-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,7,12,http://localhost:8080/api/packages,3,0,0
+1764542328902,16,GET All Activities,200,,Activity Browse Users 3-11,text,true,,14238,188,3,12,http://localhost:8080/api/activities,16,0,0
+1764542329437,3,GET All Packages,404,,Browse Packages Users 1-11,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,7,11,http://localhost:8080/api/packages,2,0,0
+1764542330104,16,GET All Activities,200,,Activity Browse Users 3-12,text,true,,14238,188,2,10,http://localhost:8080/api/activities,16,0,0
+1764542330218,3,GET All Packages,404,,Browse Packages Users 1-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,2,0,0
+1764542330485,4,GET All Packages,404,,Browse Packages Users 1-16,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,0
+1764542330558,13,GET All Activities,200,,Activity Browse Users 3-13,text,true,,14238,188,1,9,http://localhost:8080/api/activities,13,0,0
+1764542330639,4,GET All Packages,404,,Browse Packages Users 1-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,0
+1764542330781,2,GET All Locations,404,,Location Browse Users 2-12,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,8,http://localhost:8080/api/locations,2,0,0
+1764542331248,3,GET All Packages,404,,Browse Packages Users 1-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,7,http://localhost:8080/api/packages,2,0,0
+1764542331274,2,GET All Locations,404,,Location Browse Users 2-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,1,7,http://localhost:8080/api/locations,2,0,1
+1764542331346,2,GET All Packages,404,,Browse Packages Users 1-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,7,http://localhost:8080/api/packages,2,0,0
+1764542331721,15,GET All Activities,200,,Activity Browse Users 3-13,text,true,,14238,188,1,7,http://localhost:8080/api/activities,15,0,0
+1764542332529,3,GET All Packages,404,,Browse Packages Users 1-16,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,7,http://localhost:8080/api/packages,3,0,0
+1764542332982,8,GET All Activities,200,,Activity Browse Users 3-13,text,true,,14238,188,2,9,http://localhost:8080/api/activities,8,0,0
+1764542333236,3,GET All Packages,404,,Browse Packages Users 1-17,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,3,0,1
+1764542333310,2,GET All Packages,404,,Browse Packages Users 1-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,2,0,0
+1764542333324,3,GET All Packages,404,,Browse Packages Users 1-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,2,0,0
+1764542334720,3,GET All Locations,404,,Location Browse Users 2-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,3,0,0
+1764542335346,15,GET All Activities,200,,Activity Browse Users 3-14,text,true,,14238,188,1,9,http://localhost:8080/api/activities,15,0,1
+1764542335601,2,GET All Packages,404,,Browse Packages Users 1-17,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,2,0,0
+1764542335711,3,GET All Locations,404,,Location Browse Users 2-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,9,http://localhost:8080/api/locations,3,0,1
+1764542335761,2,GET All Packages,404,,Browse Packages Users 1-16,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,2,0,0
+1764542335823,3,GET All Packages,404,,Browse Packages Users 1-18,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,1
+1764542336680,2,GET All Packages,404,,Browse Packages Users 1-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,11,http://localhost:8080/api/packages,2,0,0
+1764542337537,3,GET All Packages,404,,Browse Packages Users 1-19,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,7,12,http://localhost:8080/api/packages,2,0,0
+1764542337629,2,GET All Packages,404,,Browse Packages Users 1-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,7,12,http://localhost:8080/api/packages,2,0,0
+1764542337854,128,GET All Activities,200,,Activity Browse Users 3-14,text,true,,14238,188,2,11,http://localhost:8080/api/activities,128,0,0
+1764542338287,3,GET All Packages,404,,Browse Packages Users 1-18,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,11,http://localhost:8080/api/packages,3,0,0
+1764542338309,15,GET All Activities,200,,Activity Browse Users 3-15,text,true,,14238,188,2,11,http://localhost:8080/api/activities,15,0,1
+1764542338409,3,GET All Locations,404,,Location Browse Users 2-13,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,3,11,http://localhost:8080/api/locations,3,0,0
+1764542338579,2,GET All Packages,404,,Browse Packages Users 1-17,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,10,http://localhost:8080/api/packages,2,0,0
+1764542339084,3,GET All Locations,404,,Location Browse Users 2-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,10,http://localhost:8080/api/locations,3,0,0
+1764542339663,2,GET All Locations,404,,Location Browse Users 2-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,10,http://localhost:8080/api/locations,2,0,0
+1764542339875,18,GET All Activities,200,,Activity Browse Users 3-14,text,true,,14238,188,2,10,http://localhost:8080/api/activities,18,0,0
+1764542340115,3,GET All Packages,404,,Browse Packages Users 1-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,6,9,http://localhost:8080/api/packages,3,0,0
+1764542340422,3,GET All Packages,404,,Browse Packages Users 1-18,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,3,0,0
+1764542340440,2,GET All Packages,404,,Browse Packages Users 1-16,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,5,8,http://localhost:8080/api/packages,2,0,0
+1764542340626,3,GET All Locations,404,,Location Browse Users 2-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,7,http://localhost:8080/api/locations,3,0,0
+1764542340626,12,GET All Activities,200,,Activity Browse Users 3-15,text,true,,14238,188,1,7,http://localhost:8080/api/activities,12,0,0
+1764542342171,3,GET All Locations,404,,Location Browse Users 2-14,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,2,7,http://localhost:8080/api/locations,3,0,0
+1764542342227,3,GET All Packages,404,,Browse Packages Users 1-19,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,6,http://localhost:8080/api/packages,3,0,0
+1764542342425,3,GET All Packages,404,,Browse Packages Users 1-20,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,6,http://localhost:8080/api/packages,3,0,1
+1764542342629,2,GET All Locations,404,,Location Browse Users 2-15,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12197,187,1,6,http://localhost:8080/api/locations,2,0,0
+1764542342784,4,GET All Packages,404,,Browse Packages Users 1-18,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,5,http://localhost:8080/api/packages,4,0,0
+1764542342928,16,GET All Activities,200,,Activity Browse Users 3-15,text,true,,14238,188,1,5,http://localhost:8080/api/activities,16,0,0
+1764542343007,3,GET All Packages,404,,Browse Packages Users 1-17,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,4,http://localhost:8080/api/packages,3,0,0
+1764542345330,2,GET All Packages,404,,Browse Packages Users 1-19,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,4,http://localhost:8080/api/packages,2,0,0
+1764542346133,6,GET All Packages,404,,Browse Packages Users 1-20,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,4,http://localhost:8080/api/packages,6,0,0
+1764542346524,38,GET All Packages,404,,Browse Packages Users 1-17,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,4,4,http://localhost:8080/api/packages,38,0,0
+1764542346817,2,GET All Packages,404,,Browse Packages Users 1-18,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,3,3,http://localhost:8080/api/packages,2,0,0
+1764542348584,2,GET All Packages,404,,Browse Packages Users 1-19,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,2,2,http://localhost:8080/api/packages,2,0,0
+1764542348989,2,GET All Packages,404,,Browse Packages Users 1-20,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,2,2,http://localhost:8080/api/packages,2,0,0
+1764542352393,3,GET All Packages,404,,Browse Packages Users 1-19,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,2,2,http://localhost:8080/api/packages,3,0,0
+1764542353279,3,GET All Packages,404,,Browse Packages Users 1-20,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,1,1,http://localhost:8080/api/packages,3,0,0
+1764542356885,25,GET All Packages,404,,Browse Packages Users 1-20,text,false,"Test failed: code expected to equal /
+
+****** received  : [[[404]]]
+
+****** comparison: [[[200]]]
+
+/",12194,186,1,1,http://localhost:8080/api/packages,24,0,0

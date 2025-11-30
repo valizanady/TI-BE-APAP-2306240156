@@ -17,11 +17,6 @@ import org.springframework.web.bind.annotation.*;
 public class StatisticsRestController {
 
     private final StatisticsRestService statisticsRestService;
-
-    /**
-     * Helper method to check if user has statistics access
-     * Only Superadmin and TourPackageVendor can access statistics
-     */
     private boolean hasStatisticsAccess(String role) {
         return "Superadmin".equals(role) || "TourPackageVendor".equals(role);
     }
@@ -29,22 +24,12 @@ public class StatisticsRestController {
     /**
      * GET /api/statistics/revenue?year={year}&month={month}
      * Calculate revenue by activity type
-     * RBAC: Only Superadmin and TourPackageVendor can access
-     * 
-     * @param year Required - Year to filter
-     * @param month Optional - Month to filter (1-12), null = all months
-     * @return Statistics with revenue breakdown
      */
     @GetMapping("/revenue")
     public ResponseEntity<BaseResponseDTO<StatisticsResponseDTO>> getPotentialRevenue(
             @AuthenticationPrincipal AuthenticatedUser user,
             @RequestParam Integer year,
             @RequestParam(required = false) Integer month) {
-        
-        System.out.println("🎯 GET /api/statistics/revenue?year=" + year + "&month=" + month);
-        System.out.println("👤 User role: " + user.getRole());
-        
-        // Authorization check
         if (!hasStatisticsAccess(user.getRole())) {
             System.out.println("❌ Access denied for role: " + user.getRole());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -54,7 +39,6 @@ public class StatisticsRestController {
                             .build());
         }
         
-        // Validate year
         if (year == null || year < 2000 || year > 2100) {
             return ResponseEntity.badRequest()
                     .body(BaseResponseDTO.<StatisticsResponseDTO>builder()
@@ -63,7 +47,6 @@ public class StatisticsRestController {
                             .build());
         }
         
-        // Validate month
         if (month != null && (month < 1 || month > 12)) {
             return ResponseEntity.badRequest()
                     .body(BaseResponseDTO.<StatisticsResponseDTO>builder()
@@ -99,10 +82,6 @@ public class StatisticsRestController {
      * GET /api/statistics/revenue/yearly/{year}
      * Mengembalikan statistik revenue per bulan dalam satu tahun
      * Data diambil dari OrderedActivities yang sudah fulfilled (Package status = "Processed")
-     * RBAC: Only Superadmin and TourPackageVendor can access
-     * 
-     * @param year Year to filter (path variable)
-     * @return Revenue per bulan (Jan-Des) dalam tahun tersebut
      */
     @GetMapping("/revenue/yearly/{year}")
     public ResponseEntity<BaseResponseDTO<StatisticsResponseDTO>> getYearlyRevenue(
@@ -112,7 +91,6 @@ public class StatisticsRestController {
         System.out.println("🎯 GET /api/statistics/revenue/yearly/" + year);
         System.out.println("👤 User role: " + user.getRole());
         
-        // Authorization check
         if (!hasStatisticsAccess(user.getRole())) {
             System.out.println("❌ Access denied for role: " + user.getRole());
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -122,7 +100,6 @@ public class StatisticsRestController {
                             .build());
         }
         
-        // Validate year
         if (year == null || year < 2000 || year > 2100) {
             return ResponseEntity.badRequest()
                     .body(BaseResponseDTO.<StatisticsResponseDTO>builder()
@@ -132,7 +109,6 @@ public class StatisticsRestController {
         }
         
         try {
-            // Call service dengan month = null untuk yearly statistics
             StatisticsResponseDTO statistics = statisticsRestService.calculatePotentialRevenue(year, null);
             
             System.out.println("✅ Yearly statistics calculated successfully");
@@ -160,11 +136,6 @@ public class StatisticsRestController {
      * Mengembalikan detail statistik revenue untuk satu bulan tertentu
      * Response mencakup totalRevenue dan breakdown per activityType
      * Data diambil dari OrderedActivities yang sudah fulfilled (Package status = "Processed")
-     * RBAC: Only Superadmin and TourPackageVendor can access
-     * 
-     * @param year Year to filter (path variable)
-     * @param month Month to filter 1-12 (path variable)
-     * @return Revenue detail dengan breakdown per activityType untuk bulan tersebut
      */
     @GetMapping("/revenue/monthly/{year}/{month}")
     public ResponseEntity<BaseResponseDTO<StatisticsResponseDTO>> getMonthlyRevenue(

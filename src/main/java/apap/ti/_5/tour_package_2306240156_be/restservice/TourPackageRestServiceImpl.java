@@ -447,37 +447,80 @@ public class TourPackageRestServiceImpl implements PackageRestService {
   @Override
   @Transactional
   public PackageResponseDTO updatePaymentStatus(String packageId, Integer status) {
-      System.out.println("🔔 Received payment update from Bill Service");
-      System.out.println("   Package ID: " + packageId);
-      System.out.println("   Status: " + status + " (" + (status == 1 ? "PAID" : status == 0 ? "UNPAID" : "UNKNOWN") + ")");
+      System.out.println("═══════════════════════════════════════════════════════════════");
+      System.out.println("🔔 [SERVICE LAYER] Payment Status Update");
+      System.out.println("═══════════════════════════════════════════════════════════════");
+      System.out.println("📦 Package ID: " + packageId);
+      System.out.println("🔢 Status Code: " + status);
+      System.out.println("🏷️  Status Meaning: " + (status == 1 ? "PAID ✅" : status == 0 ? "UNPAID ❌" : "UNKNOWN ⚠️"));
+      System.out.println("───────────────────────────────────────────────────────────────");
       
       // 1. Find package
       var pkg = repo.findById(packageId)
-          .orElseThrow(() -> new RuntimeException("Package not found with id: " + packageId));
+          .orElseThrow(() -> {
+              System.out.println("❌ ERROR: Package not found with ID: " + packageId);
+              System.out.println("═══════════════════════════════════════════════════════════════");
+              return new RuntimeException("Package not found with id: " + packageId);
+          });
+      
+      System.out.println("📋 Package Found:");
+      System.out.println("   Name: " + pkg.getPackageName());
+      System.out.println("   Current Status: " + pkg.getStatus());
+      System.out.println("   Owner: " + pkg.getUserId());
+      System.out.println("   Price: Rp " + String.format("%,d", pkg.getPrice()));
+      System.out.println("───────────────────────────────────────────────────────────────");
       
       // 2. Validate current status
       if (!"Waiting for Payment".equals(pkg.getStatus())) {
+          System.out.println("❌ STATUS VALIDATION FAILED");
+          System.out.println("   Expected: 'Waiting for Payment'");
+          System.out.println("   Found: '" + pkg.getStatus() + "'");
+          System.out.println("   ⚠️  Cannot update payment status - package is not in correct state");
+          System.out.println("═══════════════════════════════════════════════════════════════");
           throw new RuntimeException(
               String.format("Cannot update payment status. Package current status is '%s', expected 'Waiting for Payment'", 
                   pkg.getStatus())
           );
       }
       
+      System.out.println("✅ Status Validation Passed");
+      System.out.println("───────────────────────────────────────────────────────────────");
+      
       // 3. Update status based on payment status (Bill Service sends: 0=UNPAID, 1=PAID)
       if (status == 1) {  // PAID
+          String oldStatus = pkg.getStatus();
           pkg.setStatus("Payment Confirmed");
-          System.out.println("   ✅ Package status updated: Waiting for Payment → Payment Confirmed");
+          
+          System.out.println("💳 PAYMENT CONFIRMED - Updating Status");
+          System.out.println("   Before: " + oldStatus);
+          System.out.println("   After:  Payment Confirmed");
+          System.out.println("   ✅ Status change applied to entity");
+          
       } else if (status == 0) {  // UNPAID
-          // Optional: handle unpaid status if needed
+          System.out.println("❌ PAYMENT NOT CONFIRMED");
+          System.out.println("   Bill status is still UNPAID (status=0)");
+          System.out.println("   Cannot update package to 'Payment Confirmed'");
+          System.out.println("═══════════════════════════════════════════════════════════════");
           throw new RuntimeException("Cannot confirm payment. Bill status is still UNPAID (0).");
       } else {
+          System.out.println("❌ INVALID PAYMENT STATUS");
+          System.out.println("   Received: " + status);
+          System.out.println("   Expected: 0 (UNPAID) or 1 (PAID)");
+          System.out.println("═══════════════════════════════════════════════════════════════");
           throw new RuntimeException("Invalid payment status: " + status + ". Expected: 0 (UNPAID) or 1 (PAID).");
       }
       
       // 4. Save package
+      System.out.println("───────────────────────────────────────────────────────────────");
+      System.out.println("💾 Saving package to database...");
       repo.save(pkg);
-      
-      System.out.println("✅ Payment status updated successfully!");
+      System.out.println("✅ Package saved successfully!");
+      System.out.println("═══════════════════════════════════════════════════════════════");
+      System.out.println("🎉 PAYMENT STATUS UPDATE COMPLETED");
+      System.out.println("📦 Package ID: " + packageId);
+      System.out.println("🔄 Final Status: " + pkg.getStatus());
+      System.out.println("📅 Updated At: " + new java.util.Date());
+      System.out.println("═══════════════════════════════════════════════════════════════");
       
       return getById(packageId);
   }

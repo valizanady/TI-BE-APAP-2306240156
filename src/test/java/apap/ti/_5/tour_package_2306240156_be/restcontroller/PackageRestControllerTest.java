@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import apap.ti._5.tour_package_2306240156_be.security.ApiKeyFilter;
 import apap.ti._5.tour_package_2306240156_be.security.jwt.JwtTokenFilter;
@@ -33,6 +34,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.*;
 import static org.hamcrest.Matchers.*;
 
 import apap.ti._5.tour_package_2306240156_be.config.TestConfig;
@@ -46,7 +48,6 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 
 @SpringBootTest
 @AutoConfigureMockMvc
-@Import(TestConfig.class)
 class PackageRestControllerTest {
 
         @Autowired
@@ -129,29 +130,6 @@ class PackageRestControllerTest {
                                 .startDate(LocalDateTime.of(2024, 7, 1, 8, 0))
                                 .endDate(LocalDateTime.of(2024, 7, 5, 18, 0))
                                 .build();
-
-                // Mock Filters to pass request through
-                try {
-                        doAnswer(invocation -> {
-                                ServletRequest request = invocation.getArgument(0);
-                                ServletResponse response = invocation.getArgument(1);
-                                FilterChain chain = invocation.getArgument(2);
-                                chain.doFilter(request, response);
-                                return null;
-                        }).when(jwtTokenFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class),
-                                        any(FilterChain.class));
-
-                        doAnswer(invocation -> {
-                                ServletRequest request = invocation.getArgument(0);
-                                ServletResponse response = invocation.getArgument(1);
-                                FilterChain chain = invocation.getArgument(2);
-                                chain.doFilter(request, response);
-                                return null;
-                        }).when(apiKeyFilter).doFilter(any(ServletRequest.class), any(ServletResponse.class),
-                                        any(FilterChain.class));
-                } catch (Exception e) {
-                        e.printStackTrace();
-                }
         }
 
         // ==================== GET /package ====================
@@ -176,9 +154,10 @@ class PackageRestControllerTest {
 
                 when(packageRestService.getAll()).thenReturn(packages);
 
-                mockMvc.perform(get("/package")
+                mockMvc.perform(get("/api/package")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
+                                .andDo(print())
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(200))
                                 .andExpect(jsonPath("$.message").value("Success"))
@@ -196,7 +175,7 @@ class PackageRestControllerTest {
         void testGetAll_EmptyList() throws Exception {
                 when(packageRestService.getAll()).thenReturn(new ArrayList<>());
 
-                mockMvc.perform(get("/package")
+                mockMvc.perform(get("/api/package")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
@@ -213,7 +192,7 @@ class PackageRestControllerTest {
         void testGetById_Success() throws Exception {
                 when(packageRestService.getById(packageId)).thenReturn(packageResponseDTO);
 
-                mockMvc.perform(get("/package/{id}", packageId)
+                mockMvc.perform(get("/api/package/{id}", packageId)
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
@@ -234,7 +213,7 @@ class PackageRestControllerTest {
                 when(packageRestService.getById(packageId))
                                 .thenThrow(new RuntimeException("Package not found"));
 
-                mockMvc.perform(get("/package/{id}", packageId)
+                mockMvc.perform(get("/api/package/{id}", packageId)
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isNotFound())
@@ -252,7 +231,7 @@ class PackageRestControllerTest {
                 when(packageRestService.create(any(CreatePackageRequestDTO.class), anyString(), anyString()))
                                 .thenReturn(packageResponseDTO);
 
-                mockMvc.perform(post("/package/create")
+                mockMvc.perform(post("/api/package/create")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(createPackageRequestDTO)))
@@ -277,7 +256,7 @@ class PackageRestControllerTest {
                 invalidRequest.setStartDate(LocalDateTime.of(2024, 6, 1, 8, 0));
                 invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
 
-                mockMvc.perform(post("/package/create")
+                mockMvc.perform(post("/api/package/create")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -298,7 +277,7 @@ class PackageRestControllerTest {
                 invalidRequest.setStartDate(LocalDateTime.of(2024, 6, 1, 8, 0));
                 invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
 
-                mockMvc.perform(post("/package/create")
+                mockMvc.perform(post("/api/package/create")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -316,7 +295,7 @@ class PackageRestControllerTest {
                 invalidRequest.setQuota(20);
                 invalidRequest.setEndDate(LocalDateTime.of(2024, 6, 5, 18, 0));
 
-                mockMvc.perform(post("/package/create")
+                mockMvc.perform(post("/api/package/create")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -334,7 +313,7 @@ class PackageRestControllerTest {
                 invalidRequest.setQuota(20);
                 invalidRequest.setStartDate(LocalDateTime.of(2024, 6, 1, 8, 0));
 
-                mockMvc.perform(post("/package/create")
+                mockMvc.perform(post("/api/package/create")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
@@ -349,7 +328,7 @@ class PackageRestControllerTest {
                 when(packageRestService.create(any(CreatePackageRequestDTO.class), anyString(), anyString()))
                                 .thenThrow(new RuntimeException("Database error"));
 
-                mockMvc.perform(post("/package/create")
+                mockMvc.perform(post("/api/package/create")
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(createPackageRequestDTO)))
@@ -365,7 +344,7 @@ class PackageRestControllerTest {
         void testDeletePackage_Success() throws Exception {
                 when(packageRestService.deleteById(packageId)).thenReturn(packageResponseDTO);
 
-                mockMvc.perform(delete("/package/{id}/delete", packageId)
+                mockMvc.perform(delete("/api/package/{id}/delete", packageId)
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
@@ -382,7 +361,7 @@ class PackageRestControllerTest {
                 when(packageRestService.deleteById(packageId))
                                 .thenThrow(new RuntimeException("Package not found"));
 
-                mockMvc.perform(delete("/package/{id}/delete", packageId)
+                mockMvc.perform(delete("/api/package/{id}/delete", packageId)
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
@@ -398,7 +377,7 @@ class PackageRestControllerTest {
                 when(packageRestService.deleteById(packageId))
                                 .thenThrow(new RuntimeException("Cannot delete processed package"));
 
-                mockMvc.perform(delete("/package/{id}/delete", packageId)
+                mockMvc.perform(delete("/api/package/{id}/delete", packageId)
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
@@ -413,7 +392,7 @@ class PackageRestControllerTest {
                 when(packageRestService.deleteById(packageId))
                                 .thenThrow(new RuntimeException("Package has active plans"));
 
-                mockMvc.perform(delete("/package/{id}/delete", packageId)
+                mockMvc.perform(delete("/api/package/{id}/delete", packageId)
                                 .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
@@ -442,7 +421,8 @@ class PackageRestControllerTest {
                 when(packageRestService.updatePackage(eq(packageId), any(UpdatePackageRequestDTO.class)))
                                 .thenReturn(updatedResponse);
 
-                mockMvc.perform(put("/package/{id}/edit", packageId)
+                mockMvc.perform(put("/api/package/{id}/edit", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatePackageRequestDTO)))
                                 .andExpect(status().isOk())
@@ -464,7 +444,8 @@ class PackageRestControllerTest {
                                 .endDate(LocalDateTime.of(2024, 7, 5, 18, 0))
                                 .build();
 
-                mockMvc.perform(put("/package/{id}/edit", packageId)
+                mockMvc.perform(put("/api/package/{id}/edit", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
                                 .andExpect(status().isBadRequest())
@@ -482,7 +463,8 @@ class PackageRestControllerTest {
                                 .endDate(LocalDateTime.of(2024, 7, 5, 18, 0))
                                 .build();
 
-                mockMvc.perform(put("/package/{id}/edit", packageId)
+                mockMvc.perform(put("/api/package/{id}/edit", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
                                 .andExpect(status().isBadRequest())
@@ -498,7 +480,8 @@ class PackageRestControllerTest {
                                 .quota(25)
                                 .build();
 
-                mockMvc.perform(put("/package/{id}/edit", packageId)
+                mockMvc.perform(put("/api/package/{id}/edit", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(invalidRequest)))
                                 .andExpect(status().isBadRequest())
@@ -512,7 +495,8 @@ class PackageRestControllerTest {
                 when(packageRestService.updatePackage(eq(packageId), any(UpdatePackageRequestDTO.class)))
                                 .thenThrow(new RuntimeException("Package not found"));
 
-                mockMvc.perform(put("/package/{id}/edit", packageId)
+                mockMvc.perform(put("/api/package/{id}/edit", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatePackageRequestDTO)))
                                 .andExpect(status().isBadRequest())
@@ -528,7 +512,8 @@ class PackageRestControllerTest {
                 when(packageRestService.updatePackage(eq(packageId), any(UpdatePackageRequestDTO.class)))
                                 .thenThrow(new RuntimeException("Cannot update processed package"));
 
-                mockMvc.perform(put("/package/{id}/edit", packageId)
+                mockMvc.perform(put("/api/package/{id}/edit", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatePackageRequestDTO)))
                                 .andExpect(status().isBadRequest())
@@ -543,7 +528,8 @@ class PackageRestControllerTest {
                 when(packageRestService.updatePackage(eq(packageId), any(UpdatePackageRequestDTO.class)))
                                 .thenThrow(new RuntimeException("Cannot update deleted package"));
 
-                mockMvc.perform(put("/package/{id}/edit", packageId)
+                mockMvc.perform(put("/api/package/{id}/edit", packageId)
+                                .with(authentication(createAuthentication(mockVendorUser)))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatePackageRequestDTO)))
                                 .andExpect(status().isBadRequest())
@@ -570,7 +556,8 @@ class PackageRestControllerTest {
 
                 when(packageRestService.processPackage(eq(packageId), anyString())).thenReturn(processedResponse);
 
-                mockMvc.perform(put("/package/{id}/process", packageId)
+                mockMvc.perform(put("/api/package/{id}/process", packageId)
+                                .with(authentication(createAuthentication(mockCustomerUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.status").value(200))
@@ -586,7 +573,8 @@ class PackageRestControllerTest {
                 when(packageRestService.processPackage(eq(packageId), anyString()))
                                 .thenThrow(new RuntimeException("Package not found"));
 
-                mockMvc.perform(put("/package/{id}/process", packageId)
+                mockMvc.perform(put("/api/package/{id}/process", packageId)
+                                .with(authentication(createAuthentication(mockCustomerUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.status").value(400))
@@ -601,7 +589,8 @@ class PackageRestControllerTest {
                 when(packageRestService.processPackage(eq(packageId), anyString()))
                                 .thenThrow(new RuntimeException("Package already processed"));
 
-                mockMvc.perform(put("/package/{id}/process", packageId)
+                mockMvc.perform(put("/api/package/{id}/process", packageId)
+                                .with(authentication(createAuthentication(mockCustomerUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.status").value(400))
@@ -615,11 +604,12 @@ class PackageRestControllerTest {
                 when(packageRestService.processPackage(eq(packageId), anyString()))
                                 .thenThrow(new RuntimeException("Cannot process package without plans"));
 
-                mockMvc.perform(put("/package/{id}/process", packageId)
+                mockMvc.perform(put("/api/package/{id}/process", packageId)
+                                .with(authentication(createAuthentication(mockCustomerUser)))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.status").value(400))
-                                .andExpect(jsonPath("$.message").value("Cannot process package without plans"));
+                                .andExpect(jsonPath("$.message").value("Package has no plans"));
 
                 verify(packageRestService, times(1)).processPackage(eq(packageId), anyString());
         }
@@ -629,7 +619,7 @@ class PackageRestControllerTest {
                 when(packageRestService.processPackage(eq(packageId), anyString()))
                                 .thenThrow(new RuntimeException("Package status must be PENDING"));
 
-                mockMvc.perform(put("/package/{id}/process", packageId)
+                mockMvc.perform(put("/api/package/{id}/process", packageId)
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.message").value("Package status must be PENDING"));
@@ -642,7 +632,7 @@ class PackageRestControllerTest {
                 when(packageRestService.processPackage(eq(packageId), anyString()))
                                 .thenThrow(new RuntimeException("Cannot process deleted package"));
 
-                mockMvc.perform(put("/package/{id}/process", packageId)
+                mockMvc.perform(put("/api/package/{id}/process", packageId)
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.message").value("Cannot process deleted package"));

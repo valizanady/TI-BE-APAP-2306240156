@@ -20,16 +20,6 @@ public class AuthController {
 
     /**
      * Exchange OTT (One-Time Token) for JWT access token
-     * 
-     * Frontend flow:
-     * 1. User redirected from auth service with OTT: http://localhost:5173/login-success/auth?ott=2U9ZTI
-     * 2. Frontend calls this endpoint: POST /api/auth/exchange with body: {ott: "2U9ZTI"}
-     * 3. Backend calls Nabeel's service: POST https://acc-be.beel.my.id/api/auth/exchange
-     * 4. Backend returns JWT token to frontend
-     * 5. Frontend stores JWT and uses it for subsequent API calls
-     * 
-     * @param request TokenExchangeRequestDTO containing OTT
-     * @return JWT access token wrapped in BaseResponseDTO
      */
     @PostMapping("/exchange")
     public ResponseEntity<BaseResponseDTO<TokenExchangeResponseDTO>> exchangeToken(
@@ -48,7 +38,6 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(response);
             }
             
-            // Call Profile Service to exchange OTT for JWT
             String jwt = profileServiceClient.exchangeToken(request.getOtt());
             
             if (jwt == null || jwt.isEmpty()) {
@@ -60,8 +49,7 @@ public class AuthController {
                 );
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
-            
-            // Success - return JWT token
+
             TokenExchangeResponseDTO data = TokenExchangeResponseDTO.builder()
                     .jwt(jwt)
                     .build();

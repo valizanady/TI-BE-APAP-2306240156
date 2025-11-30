@@ -34,8 +34,6 @@ public class PlanRestController {
             @AuthenticationPrincipal AuthenticatedUser user) {
         
         logger.info("🎯 GET /plans/{} - Fetching plan detail", id);
-        
-        // ✅ DEBUG: Check if user is null
         if (user == null) {
             logger.error("❌ AuthenticatedUser is NULL - SecurityContext not set properly");
             var errorResponse = new java.util.HashMap<String, Object>();
@@ -49,8 +47,6 @@ public class PlanRestController {
 
         try {
             Plan plan = planRestService.getPlanById(id);
-            
-            // ✅ Authorization check for Customer
             if (!user.hasAdminPrivileges()) {
                 String packageUserId = plan.getTourPackage().getUserId();
                 
@@ -68,8 +64,6 @@ public class PlanRestController {
             }
             
             logger.info("✅ Access granted: Plan detail retrieved successfully");
-
-            // Build ordered quantities response dengan quota dari activity.capacity
             var orderedQuantitiesResponse = plan.getOrderedQuantities().stream()
                 .filter(oq -> !Boolean.TRUE.equals(oq.getIsDeleted()))
                 .map(oq -> {
@@ -114,7 +108,6 @@ public class PlanRestController {
             System.out.println("📦 Package Status: " + plan.getTourPackage().getStatus());
             System.out.println("✅ Plan detail retrieved successfully: " + plan.getId());
             
-            // ✅ FIX: Use HashMap instead of Map.of() to allow null values
             var responseWrapper = new java.util.HashMap<String, Object>();
             responseWrapper.put("status", 200);
             responseWrapper.put("message", "Plan detail retrieved successfully");
@@ -134,7 +127,7 @@ public class PlanRestController {
         }
     }
 
-    @GetMapping("/{id}/edit") // ✅ FIX: Remove duplicate "/plans"
+    @GetMapping("/{id}/edit") 
     public ResponseEntity<BaseResponseDTO<PlanDetailResponseDTO>> getEditPlanForm(
             @PathVariable UUID id) {
 
@@ -192,7 +185,6 @@ public class PlanRestController {
         }
 
         try {
-            // ✅ Authorization check BEFORE update
             Plan existingPlan = planRestService.getPlanById(id);
             
             if (!user.hasAdminPrivileges()) {
@@ -238,16 +230,12 @@ public class PlanRestController {
         }
     }
 
-    @DeleteMapping("/{id}") // ✅ Already correct
+    @DeleteMapping("/{id}") 
     public ResponseEntity<BaseResponseDTO<Void>> deletePlan(
             @PathVariable UUID id,
             @AuthenticationPrincipal AuthenticatedUser user) {
         
-        logger.info("🎯 DELETE /plans/{} - Deleting plan", id);
-        logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
-        
         try {
-            // ✅ Authorization check BEFORE delete
             Plan existingPlan = planRestService.getPlanById(id);
             
             if (!user.hasAdminPrivileges()) {
