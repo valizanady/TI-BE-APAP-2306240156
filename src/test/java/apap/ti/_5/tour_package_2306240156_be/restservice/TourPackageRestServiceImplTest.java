@@ -7,6 +7,8 @@ import apap.ti._5.tour_package_2306240156_be.repository.ActivityRepository;
 import apap.ti._5.tour_package_2306240156_be.repository.PackageRepository;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.CreatePackageRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePackageRequestDTO;
+import apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePackageRequestDTO;
+import apap.ti._5.tour_package_2306240156_be.restdto.response.BillResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.PackageResponseDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,6 +35,9 @@ class TourPackageRestServiceImplTest {
 
     @Mock
     private ActivityRepository activityRepository;
+
+    @Mock
+    private BillIntegrationService billIntegrationService;
 
     @InjectMocks
     private TourPackageRestServiceImpl tourPackageRestService;
@@ -101,12 +106,17 @@ class TourPackageRestServiceImplTest {
         when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
                 .thenReturn(testPackage);
 
+        BillResponseDTO billResponse = new BillResponseDTO();
+        billResponse.setId("BILL-123");
+        when(billIntegrationService.createBillForPackage(any(), anyString())).thenReturn(billResponse);
+
         // Act
-        PackageResponseDTO result = tourPackageRestService.processPackage("PKG001");
+        PackageResponseDTO result = tourPackageRestService.processPackage("PKG001", "customer-id");
 
         // Assert
         assertNotNull(result);
-        assertEquals("Processed", testPackage.getStatus());
+        assertNotNull(result);
+        assertEquals("Waiting for Payment", testPackage.getStatus()); // Status updated after bill creation
         assertEquals(25, testActivity.getCapacity()); // 50 - 25 = 25
         verify(packageRepository, times(2)).findById("PKG001"); // Once in processPackage, once in getById
         verify(activityRepository, times(1)).save(any(Activity.class));
@@ -120,7 +130,7 @@ class TourPackageRestServiceImplTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG999");
+            tourPackageRestService.processPackage("PKG999", "customer-id");
         });
         assertTrue(exception.getMessage().contains("Package not found"));
         verify(packageRepository).findById("PKG999");
@@ -136,7 +146,7 @@ class TourPackageRestServiceImplTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001");
+            tourPackageRestService.processPackage("PKG001", "customer-id");
         });
         assertTrue(exception.getMessage().contains("status must be 'Pending'"));
         verify(packageRepository).findById("PKG001");
@@ -151,7 +161,7 @@ class TourPackageRestServiceImplTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001");
+            tourPackageRestService.processPackage("PKG001", "customer-id");
         });
         assertTrue(exception.getMessage().contains("no active plans"));
         verify(packageRepository).findById("PKG001");
@@ -166,7 +176,7 @@ class TourPackageRestServiceImplTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001");
+            tourPackageRestService.processPackage("PKG001", "customer-id");
         });
         assertTrue(exception.getMessage().contains("All plans must have status 'Fulfilled'"));
         assertTrue(exception.getMessage().contains("Jakarta-Bali Flight Plan"));
@@ -182,7 +192,7 @@ class TourPackageRestServiceImplTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
-            tourPackageRestService.processPackage("PKG001");
+            tourPackageRestService.processPackage("PKG001", "customer-id");
         });
         assertTrue(exception.getMessage().contains("insufficient capacity"));
         verify(packageRepository).findById("PKG001");
@@ -198,16 +208,16 @@ class TourPackageRestServiceImplTest {
                 .orderedQuota(100)
                 .isDeleted(true) // Soft deleted
                 .build();
-        
+
         testPlan.getOrderedQuantities().add(deletedOQ);
-        
+
         when(packageRepository.findById("PKG001")).thenReturn(Optional.of(testPackage));
         when(activityRepository.save(any(Activity.class))).thenReturn(testActivity);
         when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
                 .thenReturn(testPackage);
 
         // Act
-        tourPackageRestService.processPackage("PKG001");
+        tourPackageRestService.processPackage("PKG001", "customer-id");
 
         // Assert
         assertEquals(25, testActivity.getCapacity()); // Should only subtract 25, not 125
@@ -248,8 +258,12 @@ class TourPackageRestServiceImplTest {
         when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
                 .thenReturn(testPackage);
 
+        BillResponseDTO billResponse = new BillResponseDTO();
+        billResponse.setId("BILL-123");
+        when(billIntegrationService.createBillForPackage(any(), anyString())).thenReturn(billResponse);
+
         // Act
-        tourPackageRestService.processPackage("PKG001");
+        tourPackageRestService.processPackage("PKG001", "customer-id");
 
         // Assert
         assertEquals(25, testActivity.getCapacity()); // 50 - 25
@@ -293,23 +307,23 @@ class TourPackageRestServiceImplTest {
     void testCreate_Success() {
         // Arrange
         CreatePackageRequestDTO request = new CreatePackageRequestDTO();
-        request.setUserId("user001");
+
         request.setPackageName("New Package");
         request.setQuota(30);
         request.setStartDate(LocalDateTime.of(2025, 12, 1, 0, 0));
         request.setEndDate(LocalDateTime.of(2025, 12, 7, 0, 0));
 
-        when(packageRepository.countByUserId("user001")).thenReturn(0L);
+        when(packageRepository.countByIdPrefix(anyString())).thenReturn(0L);
         when(packageRepository.save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
         // Act
-        PackageResponseDTO result = tourPackageRestService.create(request);
+        PackageResponseDTO result = tourPackageRestService.create(request, "user001", "Customer");
 
         // Assert
         assertNotNull(result);
         assertEquals("New Package", result.getPackageName());
-        verify(packageRepository).countByUserId("user001");
+        verify(packageRepository).countByIdPrefix(anyString());
         verify(packageRepository).save(any(apap.ti._5.tour_package_2306240156_be.model.Package.class));
     }
 
@@ -349,7 +363,7 @@ class TourPackageRestServiceImplTest {
         // Arrange
         testPackage.setStatus("Pending"); // ✅ Changed from "DRAFT"
         testPackage.setPlans(new ArrayList<>());
-        
+
         UpdatePackageRequestDTO request = new UpdatePackageRequestDTO();
         request.setPackageName("Updated Package");
         request.setQuota(40);
@@ -374,7 +388,7 @@ class TourPackageRestServiceImplTest {
     void testUpdatePackage_InvalidStatus() {
         // Arrange
         testPackage.setStatus("Processed");
-        
+
         UpdatePackageRequestDTO request = new UpdatePackageRequestDTO();
         request.setPackageName("Updated Package");
         request.setQuota(40);

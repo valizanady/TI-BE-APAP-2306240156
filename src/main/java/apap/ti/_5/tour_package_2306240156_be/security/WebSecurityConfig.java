@@ -2,6 +2,7 @@ package apap.ti._5.tour_package_2306240156_be.security;
 
 import apap.ti._5.tour_package_2306240156_be.security.jwt.JwtTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -27,6 +28,9 @@ public class WebSecurityConfig {
     
     @Autowired
     private ApiKeyFilter apiKeyFilter;
+    
+    @Value("${CORS_ALLOWED_ORIGINS}")
+    private String corsAllowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -60,19 +64,15 @@ public class WebSecurityConfig {
 
     /**
      * CORS Configuration
-     * Allow requests dari frontend domain
+     * Allow requests dari frontend domain menggunakan environment variable
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Allow specific origins (update dengan frontend URL kamu)
-        configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost:3000",  // React/Vue local dev
-            "http://localhost:5173",  // Vite local dev
-            "http://localhost:8080",  // Backend local
-            "https://your-frontend-domain.com"  // Production frontend
-        ));
+        // Parse origins dari environment variable (comma-separated)
+        String[] origins = corsAllowedOrigins.split(",");
+        configuration.setAllowedOrigins(Arrays.asList(origins));
         
         // Allow all HTTP methods
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
@@ -82,6 +82,9 @@ public class WebSecurityConfig {
         
         // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
+        
+        // Expose Authorization header
+        configuration.setExposedHeaders(List.of("Authorization"));
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

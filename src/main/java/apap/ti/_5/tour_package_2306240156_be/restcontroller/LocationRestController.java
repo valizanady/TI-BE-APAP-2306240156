@@ -9,7 +9,11 @@ import org.springframework.http.ResponseEntity;
 @CrossOrigin(origins = "${CORS_ALLOWED_ORIGINS}")
 public class LocationRestController {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+
+    public LocationRestController(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
 
     @GetMapping("/provinces")
     public ResponseEntity<?> getProvinces() {
