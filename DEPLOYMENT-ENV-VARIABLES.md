@@ -59,7 +59,7 @@ BILL_SERVICE_API_KEY=GWJBdjIkKAYlYsMthrgILglcAcVwLJRudC
 
 ```properties
 # API Key yang Bill Service kirim ke Tour Package saat payment callback
-# Tour Package akan validate key ini di header "x-api-key"
+# Tour Package akan validate key ini di header "API-KEY"
 API_KEY_BILL_SERVICE=NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
 ```
 

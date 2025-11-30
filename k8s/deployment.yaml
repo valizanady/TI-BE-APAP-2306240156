@@ -55,4 +55,9 @@ spec:
                   name: tourpackage-be-secret
                   key: BILL_SERVICE_API_KEY
 
+            # - name: BILL_SERVICE_URL
+            #   valueFrom:
+            #     configMapKeyRef:
+            #       name: tourpackage-be-config
+            #       key: BILL_SERVICE_URL
 

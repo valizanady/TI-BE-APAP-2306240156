@@ -66,7 +66,7 @@ API_KEY_BILL_SERVICE=NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
 
 ### API_KEY_BILL_SERVICE
 **Value**: `NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS`
-**Purpose**: Bill Service mengirim key ini di header "x-api-key" saat payment callback
+**Purpose**: Bill Service mengirim key ini di header "API-KEY" saat payment callback
 **Note**: Tour Package akan validate key ini di ApiKeyFilter
 
 ---
@@ -83,7 +83,7 @@ Body: { packageId, userId, packageName, billDate, quantity, price, serviceName }
 ### 2️⃣ Payment Callback Flow
 ```
 Bill Service → [POST] https://your-tour-package.com/api/package/payment/update
-Header: "x-api-key: {API_KEY_BILL_SERVICE}"
+Header: "API-KEY: {API_KEY_BILL_SERVICE}"
 Body: { packageId: "string", status: 0 or 1 }
 ```
 
@@ -108,7 +108,7 @@ curl https://your-tour-package-url.com/actuator/health
 ### 3. Test Payment Callback
 ```bash
 curl -X POST https://your-tour-package-url.com/api/package/payment/update \
-  -H "x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
+  -H "API-KEY: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
   -H "Content-Type: application/json" \
   -d '{"packageId":"test-package-id","status":1}'
 ```
@@ -132,7 +132,7 @@ curl -X POST https://your-tour-package-url.com/api/package/payment/update \
 **Solution**: Verify `BILL_SERVICE_API_KEY` matches dengan yang di-expect Bill Service
 
 ### ❌ Payment callback returns 403 Forbidden
-**Solution**: Verify Bill Service mengirim correct `x-api-key` header (value: `API_KEY_BILL_SERVICE`)
+**Solution**: Verify Bill Service mengirim correct `API-KEY` header (value: `API_KEY_BILL_SERVICE`)
 
 ### ❌ Package price is 0 in bill
 **Solution**: Already fixed! Service calculate price dari OrderedQuantities if package.price = 0

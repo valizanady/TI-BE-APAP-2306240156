@@ -14,13 +14,13 @@ import java.io.IOException;
 
 /**
  * API Key Filter for microservice-to-microservice authentication.
- * This filter validates the x-api-key header for specific endpoints.
+ * This filter validates the API-KEY header for specific endpoints.
  */
 @Component
 public class ApiKeyFilter extends OncePerRequestFilter {
     
     private static final Logger logger = LoggerFactory.getLogger(ApiKeyFilter.class);
-    private static final String API_KEY_HEADER = "x-api-key";
+    private static final String API_KEY_HEADER = "API-KEY";
     
     @Value("${API_KEY_BILL_SERVICE:default-secret-key}")
     private String apiKeyBillService;

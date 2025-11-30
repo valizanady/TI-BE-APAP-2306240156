@@ -15,7 +15,7 @@ POST /api/package/payment/update
 Bill Service harus mengirim API Key di header:
 
 ```http
-x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
+API-KEY: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
 ```
 
 ⚠️ **PENTING**: 
@@ -28,7 +28,7 @@ x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
 ### Headers
 ```http
 Content-Type: application/json
-x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
+API-KEY: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
 ```
 
 ### Body
@@ -136,7 +136,7 @@ x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
 ```bash
 curl -X POST http://localhost:8080/api/package/payment/update \
   -H "Content-Type: application/json" \
-  -H "x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
+  -H "API-KEY: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
   -d '{
     "packageId": "PKG-20251130-001",
     "status": 1
@@ -157,7 +157,7 @@ API_KEY_BILL_SERVICE=NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS
 Bill Service harus menggunakan:
 - **URL**: `http://localhost:8080/api/package/payment/update` (atau production URL)
 - **API Key**: `NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS`
-- **Header**: `x-api-key` (lowercase, dengan dash)
+- **Header**: `API-KEY` (uppercase dengan dash)
 
 ## 📊 Integration Flow
 
@@ -182,7 +182,7 @@ sequenceDiagram
     Bill->>Bill: Update bill status → PAID
     
     Note over Customer,Bill: Step 4: Bill Service calls Tour Package callback
-    Bill->>TourPackage: POST /api/package/payment/update (with x-api-key header)
+    Bill->>TourPackage: POST /api/package/payment/update (with API-KEY header)
     Note right of Bill: Body: {"packageId": "PKG-123", "status": 1}
     TourPackage->>TourPackage: Validate: status == "Waiting for Payment"
     TourPackage->>TourPackage: Update status → "Payment Confirmed"
@@ -208,7 +208,7 @@ sequenceDiagram
 # 2. Call payment update endpoint
 curl -X POST http://localhost:8080/api/package/payment/update \
   -H "Content-Type: application/json" \
-  -H "x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
+  -H "API-KEY: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
   -d '{
     "packageId": "PKG-20251130-001",
     "status": 1
@@ -224,7 +224,7 @@ curl http://localhost:8080/api/package/PKG-20251130-001 \
 ```bash
 curl -X POST http://localhost:8080/api/package/payment/update \
   -H "Content-Type: application/json" \
-  -H "x-api-key: invalid-key" \
+  -H "API-KEY: invalid-key" \
   -d '{
     "packageId": "PKG-20251130-001",
     "status": 1
@@ -238,7 +238,7 @@ curl -X POST http://localhost:8080/api/package/payment/update \
 ```bash
 curl -X POST http://localhost:8080/api/package/payment/update \
   -H "Content-Type: application/json" \
-  -H "x-api-key: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
+  -H "API-KEY: NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS" \
   -d '{
     "packageId": "PKG-20251130-001",
     "status": 99
