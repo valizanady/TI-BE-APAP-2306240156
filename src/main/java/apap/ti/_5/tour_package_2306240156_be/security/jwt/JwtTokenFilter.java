@@ -32,7 +32,7 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     private RestTemplate restTemplate;
 
     // Endpoint Profile Service untuk validasi token
-    private final String AUTH_URL = "https://acc-be.beel.my.id/api/auth/me";
+    private final String AUTH_URL = "http://2306275166-be.hafizmuh.site/api/auth/me";
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, 

@@ -303,7 +303,8 @@ public class PackageRestController {
           logger.info("✅ Authorization: Customer can process any fulfilled package");
 
           // ✨ Call service method (which includes Bill creation)
-          PackageResponseDTO processedPackage = service.processPackage(id);
+          // ✅ Pass authenticated customer ID untuk Bill customerId
+          PackageResponseDTO processedPackage = service.processPackage(id, user.getId());
 
           logger.info("✅ Package {} processed successfully: Pending → Processed", id);
 

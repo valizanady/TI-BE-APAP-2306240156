@@ -8,7 +8,7 @@ spring:
         enabled: true
 
   profiles:
-    active: 'prod'
+    active: 'dev'
 
   jpa:
     hibernate:

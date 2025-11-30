@@ -25,7 +25,7 @@ public class BillIntegrationService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${BILL_SERVICE_URL:http://localhost:8081/api/bill/create}")
+    @Value("${BILL_SERVICE_URL:http://2306165931-be.hafizmuh.site/api/bill/create}")
     private String billServiceUrl;
 
     @Value("${BILL_SERVICE_API_KEY:NlfUxKNkXIwORhKZCbbYevFecxRCFttNnycTS}")
@@ -35,16 +35,19 @@ public class BillIntegrationService {
      * Membuat Bill di Bill Service setelah Package berhasil diproses
      * 
      * @param processedPackage Package yang sudah diproses (status = "Processed")
+     * @param authenticatedCustomerId ID customer yang melakukan process package (dari JWT token)
      * @return BillResponseDTO dari Bill Service
      * @throws RuntimeException jika gagal membuat Bill
      */
-    public BillResponseDTO createBillForPackage(Package processedPackage) {
+    public BillResponseDTO createBillForPackage(Package processedPackage, String authenticatedCustomerId) {
         logger.info("🔔 Creating Bill for processed package: {}", processedPackage.getId());
         
         try {
             // 1. Build request DTO
+            // ⚠️ IMPORTANT: customerId diambil dari authenticated user (yang process package),
+            //               BUKAN dari package.userId (owner package)
             CreateBillRequestDTO billRequest = CreateBillRequestDTO.builder()
-                    .customerId(processedPackage.getUserId())
+                    .customerId(authenticatedCustomerId) // ✅ Customer yang process package
                     .serviceName("TOURPACKAGE") // ✅ Must match enum in Bill Service
                     .serviceReferenceId(processedPackage.getId())
                     .description("Bill for processed tour package: " + processedPackage.getPackageName())
@@ -52,13 +55,15 @@ public class BillIntegrationService {
                     .build();
 
             logger.info("   Request Body:");
-            logger.info("   - Customer ID: {}", billRequest.getCustomerId());
+            logger.info("   - Customer ID (Processor): {}", billRequest.getCustomerId());
+            logger.info("   - Package Owner ID: {}", processedPackage.getUserId());
             logger.info("   - Service Name: {}", billRequest.getServiceName());
             logger.info("   - Service Reference ID: {}", billRequest.getServiceReferenceId());
             logger.info("   - Amount: Rp {}", billRequest.getAmount());
             logger.info("   - Description: {}", billRequest.getDescription());
 
             // 2. Set headers with API Key (menggunakan header "API-KEY" sesuai Bill Service)
+            // ⚠️ DO NOT send Authorization header - Bill Service will use customerId from request body
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("API-KEY", apiKey);

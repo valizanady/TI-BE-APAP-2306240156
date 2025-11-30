@@ -1,8 +1,8 @@
 package apap.ti._5.tour_package_2306240156_be.restdto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.*;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
 
@@ -16,10 +16,10 @@ public class CreatePackageRequestDTO {
     private int quota;
 
     @NotNull(message = "Start date is required")
-    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime startDate;
 
     @NotNull(message = "End date is required")
-    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm")
     private LocalDateTime endDate;
 }

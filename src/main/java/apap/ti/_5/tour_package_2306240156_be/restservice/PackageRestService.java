@@ -15,6 +15,6 @@ public interface PackageRestService {
   PackageResponseDTO create(CreatePackageRequestDTO req, String userId, String userRole);
   PackageResponseDTO deleteById(String id);
   PackageResponseDTO updatePackage(String id, UpdatePackageRequestDTO dto);
-  PackageResponseDTO processPackage(String id);
+  PackageResponseDTO processPackage(String id, String authenticatedCustomerId);
   PackageResponseDTO updatePaymentStatus(String packageId, Integer status);
 }

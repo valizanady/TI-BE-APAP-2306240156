@@ -288,8 +288,9 @@ public class TourPackageRestServiceImpl implements PackageRestService {
 
   @Transactional
   @Override
-  public PackageResponseDTO processPackage(String id) {
+  public PackageResponseDTO processPackage(String id, String authenticatedCustomerId) {
       System.out.println("🔄 Processing package: " + id);
+      System.out.println("👤 Authenticated Customer ID: " + authenticatedCustomerId);
       
       // 1. Find Package
       var pkg = repo.findById(id)
@@ -354,16 +355,11 @@ public class TourPackageRestServiceImpl implements PackageRestService {
           }
       }
       
-      // 6. Update Package status to "Processed"
-      pkg.setStatus("Processed");
-      repo.save(pkg);
-      
-      System.out.println("✅ Package processed successfully!");
+      System.out.println("✅ Activities processed successfully!");
       System.out.println("   Total activities capacity reduced: " + totalActivitiesProcessed);
-      System.out.println("   Package status: Pending → Processed");
       System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       
-      // 7. ✨ Create Bill in Bill Service after successful processing
+      // 6. ✨ Create Bill in Bill Service after successful processing
       // Calculate total price from OrderedQuantities (same formula as DTO mapper)
       long totalPriceFromPlans = pkg.getPlans().stream()
           .filter(plan -> !Boolean.TRUE.equals(plan.getIsDeleted()))
@@ -390,13 +386,19 @@ public class TourPackageRestServiceImpl implements PackageRestService {
           System.out.println("   Reason: Final amount is " + billAmount);
           System.out.println("   Package has no price and OrderedQuantities have no total");
           System.out.println("   Bill Service requires amount > 0");
+          System.out.println("   📝 Setting status to 'Processed' (no bill created)");
           System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+          
+          // Set status to "Processed" when bill creation is skipped
+          pkg.setStatus("Processed");
+          repo.save(pkg);
       } else {
           try {
               System.out.println("📄 STARTING BILL CREATION PROCESS...");
               System.out.println("   Package ID: " + pkg.getId());
               System.out.println("   Package Name: " + pkg.getPackageName());
-              System.out.println("   User ID: " + pkg.getUserId());
+              System.out.println("   Package Owner ID: " + pkg.getUserId());
+              System.out.println("   Customer ID (Processor): " + authenticatedCustomerId);
               System.out.println("   Amount: Rp " + billAmount);
               System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
               
@@ -407,13 +409,19 @@ public class TourPackageRestServiceImpl implements PackageRestService {
                   System.out.println("   ℹ️  Using calculated price from OrderedQuantities: Rp " + billAmount);
               }
               
-              BillResponseDTO billResponse = billIntegrationService.createBillForPackage(pkg);
+              // ✅ Pass authenticatedCustomerId untuk Bill customerId
+              BillResponseDTO billResponse = billIntegrationService.createBillForPackage(pkg, authenticatedCustomerId);
               
               System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
               System.out.println("🎉 BILL CREATED SUCCESSFULLY!");
               System.out.println("   Bill ID: " + (billResponse != null ? billResponse.getId() : "N/A"));
               System.out.println("   Service Name: " + (billResponse != null ? billResponse.getServiceName() : "N/A"));
               System.out.println("   Reference ID: " + (billResponse != null ? billResponse.getServiceReferenceId() : "N/A"));
+              
+              // 7. Update Package status to "Waiting for Payment" after bill created
+              pkg.setStatus("Waiting for Payment");
+              repo.save(pkg);
+              System.out.println("   📝 Package status updated: Pending → Waiting for Payment");
               System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
               
           } catch (Exception e) {
@@ -421,12 +429,15 @@ public class TourPackageRestServiceImpl implements PackageRestService {
               System.err.println("❌ BILL CREATION FAILED!");
               System.err.println("   Error: " + e.getMessage());
               System.err.println("   Package ID: " + pkg.getId());
-              System.err.println("   Note: Package is already 'Processed', but Bill was not created");
+              System.err.println("   Note: Activities capacity already reduced, but Bill was not created");
               System.err.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
               
-              // Package sudah "Processed", tapi Bill gagal dibuat
+              // Rollback: Set status to Processed (activities already reduced)
+              pkg.setStatus("Processed");
+              repo.save(pkg);
+              
               // Throw exception agar FE tahu ada masalah dengan Bill Service
-              throw new RuntimeException("Package processed successfully, but failed to create Bill: " + e.getMessage(), e);
+              throw new RuntimeException("Failed to create Bill after processing package: " + e.getMessage(), e);
           }
       } // End of if (price > 0) block
       

@@ -17,7 +17,7 @@ public class ProfileServiceClient {
 
     private final RestTemplate restTemplate;
 
-    private final String PROFILE_BASE_URL = "https://acc-be.beel.my.id/api";
+    private final String PROFILE_BASE_URL = "http://2306275166-be.hafizmuh.site/api";
 
     /**
      * Exchange OTT (One-Time Token) for JWT access token
