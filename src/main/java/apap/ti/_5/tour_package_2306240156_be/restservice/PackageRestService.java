@@ -11,9 +11,10 @@ public interface PackageRestService {
   List<PackageResponseDTO> getAll();
   List<PackageResponseDTO> getPackagesForCustomer(String userId);
   PackageResponseDTO getById(String id);
+  PackageResponseDTO getById(String id, String userId, String userRole); // With authorization
   PackageResponseDTO create(CreatePackageRequestDTO req, String userId, String userRole);
   PackageResponseDTO deleteById(String id);
   PackageResponseDTO updatePackage(String id, UpdatePackageRequestDTO dto);
   PackageResponseDTO processPackage(String id);
-
+  PackageResponseDTO updatePaymentStatus(String packageId, Integer status);
 }

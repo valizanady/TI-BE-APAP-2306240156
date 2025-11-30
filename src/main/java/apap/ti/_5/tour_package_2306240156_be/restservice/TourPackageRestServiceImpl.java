@@ -6,6 +6,7 @@ import apap.ti._5.tour_package_2306240156_be.repository.ActivityRepository;
 import apap.ti._5.tour_package_2306240156_be.repository.PackageRepository;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.CreatePackageRequestDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePackageRequestDTO;
+import apap.ti._5.tour_package_2306240156_be.restdto.response.BillResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.PackageResponseDTO;
 import apap.ti._5.tour_package_2306240156_be.restdto.response.PlanResponseDTO;
 import jakarta.transaction.Transactional;
@@ -21,6 +22,7 @@ import java.util.List;
 public class TourPackageRestServiceImpl implements PackageRestService {
   private final PackageRepository repo;
   private final ActivityRepository activityRepository;
+  private final BillIntegrationService billIntegrationService;
 
   private PackageResponseDTO map(Package p) {
     // Calculate total package price from active plans
@@ -109,6 +111,73 @@ public class TourPackageRestServiceImpl implements PackageRestService {
         .startDate(pkg.getStartDate())
         .endDate(pkg.getEndDate())
         .plans(plans)
+        .build();
+  }
+
+  @Override
+  public PackageResponseDTO getById(String id, String userId, String userRole) {
+    var pkg = repo.findById(id).orElseThrow(() -> new RuntimeException("Package not found"));
+    
+    // ✅ Authorization check: Customer can only see Plans from their own packages
+    boolean isOwner = userId != null && userId.equals(pkg.getUserId());
+    boolean isAdminOrVendor = "Superadmin".equals(userRole) || "TourPackageVendor".equals(userRole);
+    boolean canSeePlans = isOwner || isAdminOrVendor;
+    
+    System.out.println("🔍 Authorization check for package " + id);
+    System.out.println("   Package owner: " + pkg.getUserId());
+    System.out.println("   Current user: " + userId + " (Role: " + userRole + ")");
+    System.out.println("   Can see plans: " + canSeePlans);
+    
+    // Map plans only if authorized
+    var plans = !canSeePlans ? List.<PlanResponseDTO>of() // ✅ Hide plans if not authorized
+        : (pkg.getPlans() == null ? List.<PlanResponseDTO>of()
+            : pkg.getPlans().stream()
+                .filter(plan -> !Boolean.TRUE.equals(plan.getIsDeleted()))
+                .map(PlanResponseDTO::fromEntity)
+                .toList());
+
+    // Calculate total package price from all active plans (even if user can't see details)
+    Long totalPackagePrice = pkg.getPlans() == null ? 0L
+        : pkg.getPlans().stream()
+            .filter(plan -> !Boolean.TRUE.equals(plan.getIsDeleted()))
+            .mapToLong(plan -> {
+                if (plan.getOrderedQuantities() == null) return 0L;
+                return plan.getOrderedQuantities().stream()
+                    .filter(oq -> !Boolean.TRUE.equals(oq.getIsDeleted()))
+                    .mapToLong(oq -> (long) oq.getOrderedQuota() * oq.getPrice())
+                    .sum();
+            })
+            .sum();
+
+    // ✅ Check if package can be processed (all plans fulfilled)
+    boolean allPlansFulfilled = pkg.getPlans() != null && !pkg.getPlans().isEmpty() &&
+        pkg.getPlans().stream()
+            .filter(plan -> !Boolean.TRUE.equals(plan.getIsDeleted()))
+            .allMatch(plan -> "Fulfilled".equals(plan.getStatus()));
+    
+    boolean canProcess = "Pending".equals(pkg.getStatus()) && allPlansFulfilled;
+    
+    // Generate access message
+    String accessMessage = null;
+    if (!canSeePlans && "Customer".equals(userRole)) {
+        String creatorName = pkg.getCreatorRole() != null ? pkg.getCreatorRole() : "Admin/Vendor";
+        accessMessage = "This package was created by " + creatorName + ". Plan details are not visible to you, but you can process it if all plans are fulfilled.";
+    }
+
+    return PackageResponseDTO.builder()
+        .id(pkg.getId())
+        .userId(pkg.getUserId())
+        .creatorRole(pkg.getCreatorRole())
+        .packageName(pkg.getPackageName())
+        .quota(pkg.getQuota())
+        .price(totalPackagePrice)
+        .status(pkg.getStatus())
+        .startDate(pkg.getStartDate())
+        .endDate(pkg.getEndDate())
+        .plans(plans) // ✅ Empty list if not authorized
+        .canViewPlans(canSeePlans)
+        .canProcess(canProcess)
+        .accessMessage(accessMessage)
         .build();
   }
 
@@ -292,9 +361,116 @@ public class TourPackageRestServiceImpl implements PackageRestService {
       System.out.println("✅ Package processed successfully!");
       System.out.println("   Total activities capacity reduced: " + totalActivitiesProcessed);
       System.out.println("   Package status: Pending → Processed");
+      System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      
+      // 7. ✨ Create Bill in Bill Service after successful processing
+      // Calculate total price from OrderedQuantities (same formula as DTO mapper)
+      long totalPriceFromPlans = pkg.getPlans().stream()
+          .filter(plan -> !Boolean.TRUE.equals(plan.getIsDeleted()))
+          .mapToLong(plan -> {
+              return plan.getOrderedQuantities().stream()
+                  .filter(oq -> !Boolean.TRUE.equals(oq.getIsDeleted()))
+                  .mapToLong(oq -> (long) oq.getOrderedQuota() * oq.getPrice())
+                  .sum();
+          })
+          .sum();
+      
+      // Use calculated price if package price field is 0 (which is common since price is computed)
+      Long billAmount = (pkg.getPrice() == null || pkg.getPrice() <= 0) ? totalPriceFromPlans : pkg.getPrice();
+      
+      System.out.println("📊 Bill Amount Calculation:");
+      System.out.println("   Package.price (DB field): " + pkg.getPrice());
+      System.out.println("   Calculated from OrderedQuantities: " + totalPriceFromPlans);
+      System.out.println("   Final Bill Amount: " + billAmount);
+      System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      
+      // Only skip if amount is still 0 or negative after calculation
+      if (billAmount == null || billAmount <= 0) {
+          System.out.println("⚠️ BILL CREATION SKIPPED");
+          System.out.println("   Reason: Final amount is " + billAmount);
+          System.out.println("   Package has no price and OrderedQuantities have no total");
+          System.out.println("   Bill Service requires amount > 0");
+          System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      } else {
+          try {
+              System.out.println("📄 STARTING BILL CREATION PROCESS...");
+              System.out.println("   Package ID: " + pkg.getId());
+              System.out.println("   Package Name: " + pkg.getPackageName());
+              System.out.println("   User ID: " + pkg.getUserId());
+              System.out.println("   Amount: Rp " + billAmount);
+              System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+              
+              // Set price for Bill creation (using calculated amount)
+              Long originalPrice = pkg.getPrice();
+              if (originalPrice == null || originalPrice <= 0) {
+                  pkg.setPrice(billAmount);
+                  System.out.println("   ℹ️  Using calculated price from OrderedQuantities: Rp " + billAmount);
+              }
+              
+              BillResponseDTO billResponse = billIntegrationService.createBillForPackage(pkg);
+              
+              System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+              System.out.println("🎉 BILL CREATED SUCCESSFULLY!");
+              System.out.println("   Bill ID: " + (billResponse != null ? billResponse.getId() : "N/A"));
+              System.out.println("   Service Name: " + (billResponse != null ? billResponse.getServiceName() : "N/A"));
+              System.out.println("   Reference ID: " + (billResponse != null ? billResponse.getServiceReferenceId() : "N/A"));
+              System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+              
+          } catch (Exception e) {
+              System.err.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+              System.err.println("❌ BILL CREATION FAILED!");
+              System.err.println("   Error: " + e.getMessage());
+              System.err.println("   Package ID: " + pkg.getId());
+              System.err.println("   Note: Package is already 'Processed', but Bill was not created");
+              System.err.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+              
+              // Package sudah "Processed", tapi Bill gagal dibuat
+              // Throw exception agar FE tahu ada masalah dengan Bill Service
+              throw new RuntimeException("Package processed successfully, but failed to create Bill: " + e.getMessage(), e);
+          }
+      } // End of if (price > 0) block
       
       return getById(id);
   }
 
+  @Override
+  @Transactional
+  public PackageResponseDTO updatePaymentStatus(String packageId, Integer status) {
+      System.out.println("🔔 Received payment update from Bill Service");
+      System.out.println("   Package ID: " + packageId);
+      System.out.println("   Status: " + status + " (" + (status == 1 ? "PAID" : status == 0 ? "UNPAID" : "UNKNOWN") + ")");
+      
+      // 1. Find package
+      var pkg = repo.findById(packageId)
+          .orElseThrow(() -> new RuntimeException("Package not found with id: " + packageId));
+      
+      // 2. Validate current status
+      if (!"Waiting for Payment".equals(pkg.getStatus())) {
+          throw new RuntimeException(
+              String.format("Cannot update payment status. Package current status is '%s', expected 'Waiting for Payment'", 
+                  pkg.getStatus())
+          );
+      }
+      
+      // 3. Update status based on payment status (Bill Service sends: 0=UNPAID, 1=PAID)
+      if (status == 1) {  // PAID
+          pkg.setStatus("Payment Confirmed");
+          System.out.println("   ✅ Package status updated: Waiting for Payment → Payment Confirmed");
+      } else if (status == 0) {  // UNPAID
+          // Optional: handle unpaid status if needed
+          throw new RuntimeException("Cannot confirm payment. Bill status is still UNPAID (0).");
+      } else {
+          throw new RuntimeException("Invalid payment status: " + status + ". Expected: 0 (UNPAID) or 1 (PAID).");
+      }
+      
+      // 4. Save package
+      repo.save(pkg);
+      
+      System.out.println("✅ Payment status updated successfully!");
+      
+      return getById(packageId);
+  }
+
 }
   
+

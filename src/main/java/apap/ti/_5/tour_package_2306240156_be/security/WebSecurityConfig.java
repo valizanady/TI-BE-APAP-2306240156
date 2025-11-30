@@ -24,6 +24,9 @@ public class WebSecurityConfig {
 
     @Autowired
     private JwtTokenFilter jwtTokenFilter;
+    
+    @Autowired
+    private ApiKeyFilter apiKeyFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -34,12 +37,18 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public endpoints (tanpa autentikasi)
                 .requestMatchers("/api/auth/**").permitAll()
+                // Payment endpoints - no JWT required, only API Key (handled by ApiKeyFilter)
+                .requestMatchers("/api/package/payment/**").permitAll()
+                .requestMatchers("/api/packages/payment/**").permitAll()
                 .requestMatchers("/api/**").permitAll()  // TODO: Change to authenticated() setelah testing
                 
                 // Semua request lain perlu autentikasi
                 .anyRequest().authenticated()
             );
 
+        // Add API Key filter first (for microservice endpoints)
+        http.addFilterBefore(apiKeyFilter, UsernamePasswordAuthenticationFilter.class);
+        
         // Add JWT filter sebelum UsernamePasswordAuthenticationFilter
         http.addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class);
 

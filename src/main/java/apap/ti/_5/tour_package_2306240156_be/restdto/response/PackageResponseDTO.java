@@ -16,4 +16,9 @@ public class PackageResponseDTO {
   private LocalDateTime startDate;
   private LocalDateTime endDate;
   private List<PlanResponseDTO> plans;
+  
+  // Authorization metadata
+  private Boolean canViewPlans;      // Can current user see plan details?
+  private Boolean canProcess;        // Can current user process this package?
+  private String accessMessage;      // Message about access restrictions
 }

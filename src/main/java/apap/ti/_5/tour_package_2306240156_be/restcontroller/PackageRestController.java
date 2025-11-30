@@ -131,7 +131,8 @@ public class PackageRestController {
     logger.info("🔍 GET /package/{} - Fetching package detail", id);
     logger.info("👤 User: ID={}, Role={}", user.getId(), user.getRole());
     
-    PackageResponseDTO packageData = service.getById(id);
+    // ✅ Use authorization-aware getById
+    PackageResponseDTO packageData = service.getById(id, user.getId(), user.getRole());
     
     // Authorization check for Customer role
     if (!user.hasAdminPrivileges()) {
@@ -270,7 +271,8 @@ public class PackageRestController {
    * Process package (change status from Pending to Processed)
    * 
    * Access Control:
-   * - ONLY Customer can process packages (their own packages)
+   * - ONLY Customer can process packages
+   * - Customer can process ANY package (own, admin's, vendor's) IF all plans are fulfilled
    * - Superadmin & TourPackageVendor CANNOT process packages
    */
   @PutMapping("/{id}/process")
@@ -288,80 +290,20 @@ public class PackageRestController {
               return ResponseEntity.status(HttpStatus.FORBIDDEN)
                       .body(java.util.Map.of(
                           "error", "Access denied",
-                          "message", "Only customers can process their own packages"
+                          "message", "Only customers can process packages"
                       ));
           }
           
           Package tourPackage = packageRepository.findById(id)
                   .orElseThrow(() -> new RuntimeException("Package not found"));
           
-          // ✅ Customer can only process their own packages
-          if (!user.getId().equals(tourPackage.getUserId())) {
-              logger.warn("❌ Access denied: Customer {} cannot process package owned by {}", 
-                         user.getId(), tourPackage.getUserId());
-              return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                      .body(java.util.Map.of(
-                          "error", "Access denied",
-                          "message", "You can only process your own packages"
-                      ));
-          }
+          // ✅ Customer can process ANY package (removed ownership check)
+          // Customer can process packages created by Admin, Vendor, or other Customers
+          logger.info("📦 Package owner: {}, Processor: {}", tourPackage.getUserId(), user.getId());
+          logger.info("✅ Authorization: Customer can process any fulfilled package");
 
-          if ("Processed".equals(tourPackage.getStatus())) {
-              return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                      .body(java.util.Map.of(
-                          "error", "Package already processed",
-                          "message", "This package has already been processed"
-                      ));
-          }
-
-          if (!"Pending".equals(tourPackage.getStatus())) {
-              return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                      .body(java.util.Map.of(
-                          "error", "Invalid status",
-                          "message", "Only packages with 'Pending' status can be processed"
-                      ));
-          }
-
-          // Get all plans for this package
-          List<Plan> plans = tourPackage.getPlans();
-          
-          for (Plan plan : plans) {
-              if (plan.getIsDeleted() != null && plan.getIsDeleted()) continue;
-              
-              // Get all ordered quantities for this plan
-              List<OrderedQuantity> orderedQuantities = plan.getOrderedQuantities();
-              
-              for (OrderedQuantity oq : orderedQuantities) {
-                  if (oq.getIsDeleted() != null && oq.getIsDeleted()) continue;
-                  
-                  Activity activity = oq.getActivity();
-                  
-                  // Kurangi capacity dengan ordered quota
-                  int oldCapacity = activity.getCapacity();
-                  int newCapacity = oldCapacity - oq.getOrderedQuota();
-                  
-                  if (newCapacity < 0) {
-                      logger.error("❌ Activity {} would have negative capacity", activity.getId());
-                      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                              .body(java.util.Map.of(
-                                  "error", "Insufficient capacity",
-                                  "message", "Activity '" + activity.getActivityName() + 
-                                           "' has insufficient capacity (" + oldCapacity + 
-                                           ") for ordered quantity (" + oq.getOrderedQuota() + ")"
-                              ));
-                  }
-                  
-                  activity.setCapacity(newCapacity);
-                  activityRepository.save(activity);
-                  
-                  logger.info("✅ Updated activity {} capacity: {} -> {}", 
-                          activity.getActivityName(), oldCapacity, newCapacity);
-              }
-          }
-
-          // Update package status from Pending to Processed
-          tourPackage.setStatus("Processed");
-          packageRepository.save(tourPackage);
+          // ✨ Call service method (which includes Bill creation)
+          PackageResponseDTO processedPackage = service.processPackage(id);
 
           logger.info("✅ Package {} processed successfully: Pending → Processed", id);
 
@@ -369,7 +311,8 @@ public class PackageRestController {
               "message", "Package processed successfully",
               "packageId", id,
               "previousStatus", "Pending",
-              "currentStatus", "Processed"
+              "currentStatus", "Processed",
+              "package", processedPackage
           ));
 
       } catch (Exception e) {
@@ -421,4 +364,40 @@ public class PackageRestController {
               .body(new BaseResponseDTO<>(200, "Create plan form endpoint", new Date(), 
                       "Ready to create plan for package: " + id));
   }
+
+  /**
+   * POST /api/package/payment/update
+   * Update package payment status (Called by Bill Service via API Key)
+   * 
+   * Access Control:
+   * - This endpoint is ONLY for Bill Service (microservice-to-microservice)
+   * - Authenticated via x-api-key header (validated by ApiKeyFilter)
+   * - Frontend NEVER calls this endpoint
+   * - JWT authentication is BYPASSED for this endpoint
+   * 
+   * @param request UpdatePaymentStatusRequestDTO containing packageId and status
+   */
+  @PostMapping("/payment/update")
+  public ResponseEntity<BaseResponseDTO<PackageResponseDTO>> updatePaymentStatus(
+      @Valid @RequestBody apap.ti._5.tour_package_2306240156_be.restdto.request.UpdatePaymentStatusRequestDTO request) {
+    
+    logger.info("🔔 Payment update request from Bill Service");
+    logger.info("   Package ID: {}", request.getPackageId());
+    logger.info("   Status: {}", request.getStatus());
+    
+    try {
+      // Call service to update payment status
+      PackageResponseDTO response = service.updatePaymentStatus(request.getPackageId(), request.getStatus());
+      
+      logger.info("✅ Payment status updated successfully for package: {}", request.getPackageId());
+      return ResponseEntity.ok()
+          .body(new BaseResponseDTO<>(200, "Payment status updated successfully", new Date(), response));
+      
+    } catch (RuntimeException e) {
+      logger.error("❌ Error updating payment status: {}", e.getMessage());
+      return ResponseEntity.badRequest()
+          .body(new BaseResponseDTO<>(400, e.getMessage(), new Date(), null));
+    }
+  }
 }
+

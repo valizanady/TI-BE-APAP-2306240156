@@ -174,14 +174,38 @@ public class OrderedActivityRestServiceImpl implements OrderedActivityRestServic
                 .sum();
         plan.setPrice(totalPrice);
         
-        // 10. Update Plan status based on THIS PLAN's ordered quantity vs Package quota
+        // 10. Update Plan status based on:
+        //     - THIS PLAN's ordered quantity vs Package quota
+        //     - AND all activities have sufficient capacity
         int newTotalOrderedInPlan = currentTotalOrderedInPlan + request.getOrderedQuantity();
-        if (newTotalOrderedInPlan >= tourPackage.getQuota()) {
+        
+        // Check if all ordered quantities can be fulfilled (ordered <= activity capacity)
+        boolean allActivitiesCanFulfill = plan.getOrderedQuantities().stream()
+                .filter(oq -> !Boolean.TRUE.equals(oq.getIsDeleted()))
+                .allMatch(oq -> {
+                    Activity act = oq.getActivity();
+                    boolean canFulfill = oq.getOrderedQuota() <= act.getCapacity();
+                    if (!canFulfill) {
+                        System.out.println("   ⚠️ Activity '" + act.getActivityName() + "' cannot fulfill: ordered=" + oq.getOrderedQuota() + ", capacity=" + act.getCapacity());
+                    }
+                    return canFulfill;
+                });
+        
+        // Plan is Fulfilled ONLY if:
+        // 1. Total ordered >= package quota, AND
+        // 2. All activities have sufficient capacity
+        if (newTotalOrderedInPlan >= tourPackage.getQuota() && allActivitiesCanFulfill) {
             plan.setStatus("Fulfilled");
-            System.out.println("✅ Plan status updated to Fulfilled (ordered: " + newTotalOrderedInPlan + " >= quota: " + tourPackage.getQuota() + ")");
+            System.out.println("✅ Plan status updated to Fulfilled");
+            System.out.println("   - Total ordered: " + newTotalOrderedInPlan + " >= Package quota: " + tourPackage.getQuota());
+            System.out.println("   - All activities can fulfill orders");
         } else {
             plan.setStatus("Unfulfilled");
-            System.out.println("📋 Plan status remains Unfulfilled (ordered: " + newTotalOrderedInPlan + " < quota: " + tourPackage.getQuota() + ")");
+            if (newTotalOrderedInPlan < tourPackage.getQuota()) {
+                System.out.println("📋 Plan status: Unfulfilled (ordered: " + newTotalOrderedInPlan + " < quota: " + tourPackage.getQuota() + ")");
+            } else {
+                System.out.println("📋 Plan status: Unfulfilled (some activities cannot fulfill - ordered > capacity)");
+            }
         }
         
         planRepository.save(plan);
@@ -251,12 +275,23 @@ public class OrderedActivityRestServiceImpl implements OrderedActivityRestServic
                 .sum();
         plan.setPrice(totalPrice);
         
-        // 8. Update Plan status
+        // 8. Update Plan status - check both quota AND capacity
         int newTotalOrdered = currentTotalExcludingThis + newQuantity;
-        if (newTotalOrdered >= tourPackage.getQuota()) {
+        
+        // Check if all ordered quantities can be fulfilled
+        boolean allActivitiesCanFulfill = plan.getOrderedQuantities().stream()
+                .filter(oq -> !Boolean.TRUE.equals(oq.getIsDeleted()))
+                .allMatch(oq -> {
+                    Activity act = oq.getActivity();
+                    return oq.getOrderedQuota() <= act.getCapacity();
+                });
+        
+        if (newTotalOrdered >= tourPackage.getQuota() && allActivitiesCanFulfill) {
             plan.setStatus("Fulfilled");
+            System.out.println("✅ Plan status: Fulfilled (quota met & all activities can fulfill)");
         } else {
             plan.setStatus("Unfulfilled");
+            System.out.println("📋 Plan status: Unfulfilled");
         }
         
         planRepository.save(plan);
@@ -304,10 +339,20 @@ public class OrderedActivityRestServiceImpl implements OrderedActivityRestServic
         
         plan.setPrice(totalPrice);
         
-        if (activeTotalOrdered >= tourPackage.getQuota()) {
+        // Check if all remaining activities can be fulfilled
+        boolean allActivitiesCanFulfill = plan.getOrderedQuantities().stream()
+                .filter(oq -> !Boolean.TRUE.equals(oq.getIsDeleted()))
+                .allMatch(oq -> {
+                    Activity act = oq.getActivity();
+                    return oq.getOrderedQuota() <= act.getCapacity();
+                });
+        
+        if (activeTotalOrdered >= tourPackage.getQuota() && allActivitiesCanFulfill) {
             plan.setStatus("Fulfilled");
+            System.out.println("✅ Plan status: Fulfilled");
         } else {
             plan.setStatus("Unfulfilled");
+            System.out.println("📋 Plan status: Unfulfilled");
         }
         
         planRepository.save(plan);
